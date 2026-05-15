@@ -1,0 +1,72 @@
+package com.omgmoda.sistema_inventario.producto.infraestructura.controllers;
+
+import com.omgmoda.sistema_inventario.producto.aplicacion.dto.CrearProductoDTO;
+import com.omgmoda.sistema_inventario.producto.aplicacion.dto.VarianteResponseDTO;
+import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IBuscarVariantesUseCase;
+import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IRegistrarProductoUseCase;
+
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * Adaptador de entrada REST para el módulo Producto.
+ * Expone los endpoints HTTP y delega en los Input Ports.
+ * No contiene lógica de negocio.
+ */
+@RestController
+@RequestMapping("/api/v1/productos")
+public class ProductoRestController {
+
+    private final IRegistrarProductoUseCase registrarProductoUseCase;
+    private final IBuscarVariantesUseCase buscarVariantesUseCase;
+
+    public ProductoRestController(IRegistrarProductoUseCase registrarProductoUseCase,
+                                  IBuscarVariantesUseCase buscarVariantesUseCase) {
+        this.registrarProductoUseCase = registrarProductoUseCase;
+        this.buscarVariantesUseCase = buscarVariantesUseCase;
+    }
+
+    /**
+     * POST /api/v1/productos
+     * Registra un producto nuevo con sus variantes iniciales.
+     * Acceso: solo ADMIN.
+     */
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<VarianteResponseDTO>> crearProducto(
+            @Valid @RequestBody CrearProductoDTO dto) {
+        List<VarianteResponseDTO> resultado = registrarProductoUseCase.registrar(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
+    }
+
+    /**
+     * GET /api/v1/productos/variantes
+     * Busca variantes con filtros opcionales por talla, color y categoría.
+     * Acceso: ADMIN y VENDEDOR.
+     * Ejemplo: GET /api/v1/productos/variantes?talla=M&color=Negro&categoria=Camisas
+     */
+    @GetMapping("/variantes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
+    public ResponseEntity<List<VarianteResponseDTO>> buscarVariantes(
+            @RequestParam(required = false) String talla,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String categoria) {
+        return ResponseEntity.ok(buscarVariantesUseCase.buscar(talla, color, categoria));
+    }
+
+    /**
+     * GET /api/v1/productos/variantes/bajo-stock
+     * Retorna todas las variantes con stock en o por debajo del mínimo (RF09).
+     * Acceso: solo ADMIN.
+     */
+    @GetMapping("/variantes/bajo-stock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<VarianteResponseDTO>> buscarBajoStock() {
+        return ResponseEntity.ok(buscarVariantesUseCase.buscarBajoStock());
+    }
+}

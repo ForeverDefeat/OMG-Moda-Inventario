@@ -1,0 +1,5 @@
+# Excluir archivos de contexto para la IA
+/Contexto/
+
+*.pdf
+*.txt
