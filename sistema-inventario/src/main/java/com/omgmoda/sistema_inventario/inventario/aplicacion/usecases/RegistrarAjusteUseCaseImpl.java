@@ -1,7 +1,7 @@
 package com.omgmoda.sistema_inventario.inventario.aplicacion.usecases;
 
 import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.MovimientoResponseDTO;
-import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarMovimientoDTO;
+import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarAjusteDTO;
 import com.omgmoda.sistema_inventario.inventario.aplicacion.ports.IRegistrarAjusteUseCase;
 import com.omgmoda.sistema_inventario.inventario.dominio.Movimiento;
 import com.omgmoda.sistema_inventario.inventario.dominio.TipoMovimiento;
@@ -33,7 +33,7 @@ public class RegistrarAjusteUseCaseImpl implements IRegistrarAjusteUseCase {
     }
 
     @Override
-    public MovimientoResponseDTO ajustar(RegistrarMovimientoDTO dto) {
+    public MovimientoResponseDTO ajustar(RegistrarAjusteDTO dto, Long idUsuario) {
 
         // 1. Cargar la variante
         VarianteProducto variante = varianteRepository
@@ -51,7 +51,7 @@ public class RegistrarAjusteUseCaseImpl implements IRegistrarAjusteUseCase {
         // 4. Crear y persistir el movimiento de tipo AJUSTE
         Movimiento movimiento = new Movimiento(
                 dto.idVariante(),
-                dto.idUsuario(),
+                idUsuario,
                 TipoMovimiento.AJUSTE,
                 dto.cantidad(),
                 dto.motivo()

@@ -10,6 +10,8 @@ import com.omgmoda.sistema_inventario.venta.aplicacion.usecases.RegistrarVentaUs
 import com.omgmoda.sistema_inventario.venta.dominio.ports.IVentaRepository;
 import com.omgmoda.sistema_inventario.venta.infraestructura.adapters.JpaVentaAdapter;
 import com.omgmoda.sistema_inventario.venta.infraestructura.adapters.VentaJpaRepository;
+import com.omgmoda.sistema_inventario.venta.infraestructura.transaction.TransactionalAnularVentaUseCase;
+import com.omgmoda.sistema_inventario.venta.infraestructura.transaction.TransactionalRegistrarVentaUseCase;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,7 +51,9 @@ public class VentaModuleConfig {
     public IRegistrarVentaUseCase registrarVentaUseCase(
             IVentaRepository ventaRepository,
             IVarianteRepository varianteRepository) {
-        return new RegistrarVentaUseCaseImpl(ventaRepository, varianteRepository);
+        IRegistrarVentaUseCase useCase =
+                new RegistrarVentaUseCaseImpl(ventaRepository, varianteRepository);
+        return new TransactionalRegistrarVentaUseCase(useCase);
     }
 
     /**
@@ -68,6 +72,8 @@ public class VentaModuleConfig {
     public IAnularVentaUseCase anularVentaUseCase(
             IVentaRepository ventaRepository,
             IVarianteRepository varianteRepository) {
-        return new AnularVentaUseCaseImpl(ventaRepository, varianteRepository);
+        IAnularVentaUseCase useCase =
+                new AnularVentaUseCaseImpl(ventaRepository, varianteRepository);
+        return new TransactionalAnularVentaUseCase(useCase);
     }
 }

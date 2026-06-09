@@ -4,3 +4,10 @@
 *.pdf
 *.txt
 *.md
+!sistema-inventario/docs/
+!sistema-inventario/docs/*.md
+
+
+skills-*.json
+.agents/*
+ProyectoIntegrador/

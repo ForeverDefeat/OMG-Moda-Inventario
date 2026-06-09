@@ -47,6 +47,12 @@ public class JpaVentaAdapter implements IVentaRepository {
     }
 
     @Override
+    public List<Venta> findAll() {
+        return jpaRepository.findAll()
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Venta> findByUsuarioId(Long idUsuario) {
         return jpaRepository.findByIdUsuario(idUsuario)
                 .stream().map(this::toDomain).toList();
@@ -59,8 +65,20 @@ public class JpaVentaAdapter implements IVentaRepository {
     }
 
     @Override
+    public List<Venta> findByUsuarioIdAndEstado(Long idUsuario, EstadoVenta estado) {
+        return jpaRepository.findByIdUsuarioAndEstado(idUsuario, estado)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Venta> findByFechaEntre(LocalDateTime desde, LocalDateTime hasta) {
         return jpaRepository.findByFechaBetween(desde, hasta)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Venta> findByUsuarioIdAndFechaEntre(Long idUsuario, LocalDateTime desde, LocalDateTime hasta) {
+        return jpaRepository.findByIdUsuarioAndFechaBetween(idUsuario, desde, hasta)
                 .stream().map(this::toDomain).toList();
     }
 

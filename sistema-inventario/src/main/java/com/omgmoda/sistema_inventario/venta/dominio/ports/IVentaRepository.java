@@ -20,15 +20,24 @@ public interface IVentaRepository {
     /** Busca una venta por su identificador incluyendo sus detalles. */
     Optional<Venta> findById(Long id);
 
+    /** Retorna todas las ventas registradas. */
+    List<Venta> findAll();
+
     /** Retorna todas las ventas de un usuario. */
     List<Venta> findByUsuarioId(Long idUsuario);
 
     /** Filtra ventas por estado (PENDIENTE, COMPLETADA, ANULADA). */
     List<Venta> findByEstado(EstadoVenta estado);
 
+    /** Filtra ventas de un usuario por estado. */
+    List<Venta> findByUsuarioIdAndEstado(Long idUsuario, EstadoVenta estado);
+
     /**
      * Retorna ventas registradas dentro de un rango de fechas.
      * Usado para reportes de ventas por período (RF06).
      */
     List<Venta> findByFechaEntre(LocalDateTime desde, LocalDateTime hasta);
+
+    /** Retorna ventas de un usuario registradas dentro de un rango de fechas. */
+    List<Venta> findByUsuarioIdAndFechaEntre(Long idUsuario, LocalDateTime desde, LocalDateTime hasta);
 }

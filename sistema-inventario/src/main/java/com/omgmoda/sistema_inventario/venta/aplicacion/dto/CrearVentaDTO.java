@@ -1,44 +1,47 @@
 package com.omgmoda.sistema_inventario.venta.aplicacion.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Record de entrada para registrar una venta completa con sus líneas de detalle.
- * Usado en el cuerpo del POST /api/v1/ventas.
- *
- * Nota: idUsuario NO viene en este DTO — se extrae del token JWT
- * en el controlador para evitar suplantación de identidad (mejora de seguridad).
- */
+@Schema(description = "Solicitud para registrar una venta completa.")
 public record CrearVentaDTO(
 
-        @NotBlank(message = "El método de pago es obligatorio.")
+        @NotBlank(message = "El metodo de pago es obligatorio.")
+        @Schema(description = "Metodo de pago usado en la venta.", example = "EFECTIVO")
         String metodoPago,
 
-        @NotEmpty(message = "La venta debe contener al menos un ítem.")
+        @NotEmpty(message = "La venta debe contener al menos un item.")
         @Valid
+        @Schema(description = "Items vendidos.")
         List<ItemVentaDTO> items
 
 ) {
-    /**
-     * Record anidado que representa cada línea de la venta.
-     */
+    @Schema(description = "Linea de detalle de una venta.")
     public record ItemVentaDTO(
 
             @NotNull(message = "El id de la variante es obligatorio.")
+            @Schema(description = "Identificador de la variante vendida.", example = "1")
             Long idVariante,
 
             @NotNull(message = "La cantidad es obligatoria.")
             @Min(value = 1, message = "La cantidad debe ser mayor a cero.")
+            @Schema(description = "Cantidad vendida.", example = "2")
             Integer cantidad,
 
             @NotNull(message = "El precio unitario es obligatorio.")
             @DecimalMin(value = "0.0", inclusive = false,
                     message = "El precio unitario debe ser mayor a cero.")
             @Digits(integer = 8, fraction = 2)
+            @Schema(description = "Precio unitario aplicado.", example = "89.90")
             BigDecimal precioUnitario
 
     ) {}

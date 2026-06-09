@@ -1,21 +1,19 @@
 package com.omgmoda.sistema_inventario.usuario.aplicacion.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-/**
- * Record de entrada para el flujo de login.
- * Usado en el cuerpo del POST /api/v1/auth/login.
- * La contraseña viaja en texto plano sobre HTTPS;
- * el hasheo y la comparación se realizan en AutenticarUseCaseImpl.
- */
+@Schema(description = "Credenciales de acceso al sistema.")
 public record LoginDTO(
 
         @NotBlank(message = "El correo es obligatorio.")
-        @Email(message = "El correo no tiene un formato válido.")
+        @Email(message = "El correo no tiene un formato valido.")
+        @Schema(description = "Correo registrado del usuario.", example = "admin@omgmoda.com")
         String correo,
 
-        @NotBlank(message = "La contraseña es obligatoria.")
+        @NotBlank(message = "La contrasenia es obligatoria.")
+        @Schema(description = "Contrasenia en texto plano enviada por HTTPS.", example = "admin123")
         String contrasenia
 
 ) {}

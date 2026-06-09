@@ -26,7 +26,7 @@ public class SistemaInventarioApplication {
 		SpringApplication.run(SistemaInventarioApplication.class, args);
 
 
-		System.out.println("		 _______                   _____                    _____                                    _____                   _______                   _____                    _____          \r\n" + //
+		System.out.println("\n\n\n\n"+"	 _______                   _____                    _____                                    _____                   _______                   _____                    _____          \r\n" + //
 						"        /::\\    \\                 /\\    \\                  /\\    \\                                  /\\    \\                 /::\\    \\                 /\\    \\                  /\\    \\         \r\n" + //
 						"       /::::\\    \\               /::\\____\\                /::\\    \\                                /::\\____\\               /::::\\    \\               /::\\    \\                /::\\    \\        \r\n" + //
 						"      /::::::\\    \\             /::::|   |               /::::\\    \\                              /::::|   |              /::::::\\    \\             /::::\\    \\              /::::\\    \\       \r\n" + //
@@ -58,7 +58,7 @@ public class SistemaInventarioApplication {
 							"\t\t\t\t\t\t| \\__/\\ | (_) | |_| | | \\  /\\  / \\__ \\  __/   /\\__/ / |_| \\__ \\ ||  __/ | | | | |\r\n" + //
 							"\t\t\t\t\t\t \\____/_|\\___/ \\__|_| |_|\\/  \\/|_|___/\\___|   \\____/ \\__, |___/\\__\\___|_| |_| |_|\r\n" + //
 							"\t\t\t\t\t\t                                                      __/ |                      \r\n" + //
-							"\t\t\t\t\t\t                                                     |___/                       ");
+							"\t\t\t\t\t\t                                                     |___/                       \n\n\n");
     
 		/*
 		url: 	http://localhost:8080/api/v1/auth/login

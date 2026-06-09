@@ -1,7 +1,7 @@
 package com.omgmoda.sistema_inventario.inventario.aplicacion.usecases;
 
 import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.MovimientoResponseDTO;
-import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarMovimientoDTO;
+import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarEntradaDTO;
 import com.omgmoda.sistema_inventario.inventario.aplicacion.ports.IRegistrarEntradaUseCase;
 import com.omgmoda.sistema_inventario.inventario.dominio.Movimiento;
 import com.omgmoda.sistema_inventario.inventario.dominio.TipoMovimiento;
@@ -32,7 +32,7 @@ public class RegistrarEntradaUseCaseImpl implements IRegistrarEntradaUseCase {
     }
 
     @Override
-    public MovimientoResponseDTO registrar(RegistrarMovimientoDTO dto) {
+    public MovimientoResponseDTO registrar(RegistrarEntradaDTO dto, Long idUsuario) {
 
         // 1. Cargar la variante — lanza NotFoundException si no existe
         VarianteProducto variante = varianteRepository
@@ -50,7 +50,7 @@ public class RegistrarEntradaUseCaseImpl implements IRegistrarEntradaUseCase {
         // 4. Crear y persistir el movimiento de trazabilidad
         Movimiento movimiento = new Movimiento(
                 dto.idVariante(),
-                dto.idUsuario(),
+                idUsuario,
                 TipoMovimiento.ENTRADA,
                 dto.cantidad(),
                 dto.motivo()

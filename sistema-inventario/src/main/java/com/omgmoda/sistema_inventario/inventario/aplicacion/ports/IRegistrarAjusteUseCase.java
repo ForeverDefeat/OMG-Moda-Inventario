@@ -1,7 +1,7 @@
 package com.omgmoda.sistema_inventario.inventario.aplicacion.ports;
 
 import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.MovimientoResponseDTO;
-import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarMovimientoDTO;
+import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarAjusteDTO;
 
 /**
  * Input Port — contrato para el caso de uso de ajuste manual de stock.
@@ -14,8 +14,9 @@ public interface IRegistrarAjusteUseCase {
      * El campo cantidad representa el nuevo valor absoluto del stock,
      * no una diferencia. El motivo es obligatorio para trazabilidad.
      *
-     * @param dto datos validados con idVariante, idUsuario, cantidad y motivo.
+     * @param dto datos validados con idVariante, cantidad y motivo.
+     * @param idUsuario usuario autenticado que registra el ajuste.
      * @return movimiento de tipo AJUSTE persistido con el stock resultante.
      */
-    MovimientoResponseDTO ajustar(RegistrarMovimientoDTO dto);
+    MovimientoResponseDTO ajustar(RegistrarAjusteDTO dto, Long idUsuario);
 }

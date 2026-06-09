@@ -9,6 +9,7 @@ import com.omgmoda.sistema_inventario.usuario.infraestructura.adapters.JpaUsuari
 import com.omgmoda.sistema_inventario.usuario.infraestructura.adapters.UsuarioJpaRepository;
 import com.omgmoda.sistema_inventario.usuario.infraestructura.security.JwtAuthenticationFilter;
 import com.omgmoda.sistema_inventario.usuario.infraestructura.security.JwtTokenProvider;
+import com.omgmoda.sistema_inventario.usuario.infraestructura.security.UsuarioAutenticadoService;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -36,6 +37,11 @@ public class UsuarioModuleConfig {
     @Bean
     public IUsuarioRepository usuarioRepository(UsuarioJpaRepository jpaRepository) {
         return new JpaUsuarioAdapter(jpaRepository);
+    }
+
+    @Bean
+    public UsuarioAutenticadoService usuarioAutenticadoService(IUsuarioRepository usuarioRepository) {
+        return new UsuarioAutenticadoService(usuarioRepository);
     }
 
     /**

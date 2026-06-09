@@ -5,6 +5,10 @@ import com.omgmoda.sistema_inventario.producto.aplicacion.dto.VarianteResponseDT
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IBuscarVariantesUseCase;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IRegistrarProductoUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +24,8 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/productos")
+@Tag(name = "Productos", description = "Gestion de productos, variantes y consulta de stock.")
+@SecurityRequirement(name = "bearer-jwt")
 public class ProductoRestController {
 
     private final IRegistrarProductoUseCase registrarProductoUseCase;
@@ -38,6 +44,10 @@ public class ProductoRestController {
      */
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Crear producto con variantes",
+            description = "Registra un producto nuevo y sus variantes iniciales. Requiere rol ADMIN."
+    )
     public ResponseEntity<List<VarianteResponseDTO>> crearProducto(
             @Valid @RequestBody CrearProductoDTO dto) {
         List<VarianteResponseDTO> resultado = registrarProductoUseCase.registrar(dto);
@@ -52,9 +62,16 @@ public class ProductoRestController {
      */
     @GetMapping("/variantes")
     @PreAuthorize("hasAnyRole('ADMIN', 'VENDEDOR')")
+    @Operation(
+            summary = "Buscar variantes",
+            description = "Consulta variantes por filtros opcionales de talla, color y categoria."
+    )
     public ResponseEntity<List<VarianteResponseDTO>> buscarVariantes(
+            @Parameter(description = "Talla de la variante. Ejemplo: M")
             @RequestParam(required = false) String talla,
+            @Parameter(description = "Color de la variante. Ejemplo: Negro")
             @RequestParam(required = false) String color,
+            @Parameter(description = "Categoria del producto. Ejemplo: Camisas")
             @RequestParam(required = false) String categoria) {
         return ResponseEntity.ok(buscarVariantesUseCase.buscar(talla, color, categoria));
     }
@@ -66,6 +83,10 @@ public class ProductoRestController {
      */
     @GetMapping("/variantes/bajo-stock")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Listar variantes con bajo stock",
+            description = "Retorna variantes cuyo stock actual esta en o por debajo del stock minimo. Requiere rol ADMIN."
+    )
     public ResponseEntity<List<VarianteResponseDTO>> buscarBajoStock() {
         return ResponseEntity.ok(buscarVariantesUseCase.buscarBajoStock());
     }

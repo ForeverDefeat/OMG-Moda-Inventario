@@ -1,7 +1,7 @@
 package com.omgmoda.sistema_inventario.inventario.aplicacion.ports;
 
 import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.MovimientoResponseDTO;
-import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarMovimientoDTO;
+import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarEntradaDTO;
 
 /**
  * Input Port — contrato para el caso de uso de registro de entrada de mercadería.
@@ -11,8 +11,9 @@ public interface IRegistrarEntradaUseCase {
 
     /**
      * Registra una entrada de mercadería al inventario.
-     * @param dto datos validados con idVariante, idUsuario, cantidad y motivo opcional.
+     * @param dto datos validados con idVariante, cantidad y motivo opcional.
+     * @param idUsuario usuario autenticado que registra el movimiento.
      * @return movimiento persistido con el stock resultante.
      */
-    MovimientoResponseDTO registrar(RegistrarMovimientoDTO dto);
+    MovimientoResponseDTO registrar(RegistrarEntradaDTO dto, Long idUsuario);
 }

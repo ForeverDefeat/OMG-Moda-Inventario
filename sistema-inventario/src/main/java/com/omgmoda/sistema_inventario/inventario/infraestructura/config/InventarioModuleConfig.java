@@ -7,6 +7,8 @@ import com.omgmoda.sistema_inventario.inventario.aplicacion.usecases.RegistrarEn
 import com.omgmoda.sistema_inventario.inventario.dominio.ports.IMovimientoRepository;
 import com.omgmoda.sistema_inventario.inventario.infraestructura.adapters.JpaMovimientoAdapter;
 import com.omgmoda.sistema_inventario.inventario.infraestructura.adapters.MovimientoJpaRepository;
+import com.omgmoda.sistema_inventario.inventario.infraestructura.transaction.TransactionalRegistrarAjusteUseCase;
+import com.omgmoda.sistema_inventario.inventario.infraestructura.transaction.TransactionalRegistrarEntradaUseCase;
 import com.omgmoda.sistema_inventario.producto.dominio.ports.IVarianteRepository;
 
 import org.springframework.context.annotation.Bean;
@@ -40,7 +42,9 @@ public class InventarioModuleConfig {
     public IRegistrarEntradaUseCase registrarEntradaUseCase(
             IVarianteRepository varianteRepository,
             IMovimientoRepository movimientoRepository) {
-        return new RegistrarEntradaUseCaseImpl(varianteRepository, movimientoRepository);
+        IRegistrarEntradaUseCase useCase =
+                new RegistrarEntradaUseCaseImpl(varianteRepository, movimientoRepository);
+        return new TransactionalRegistrarEntradaUseCase(useCase);
     }
 
     /**
@@ -51,6 +55,8 @@ public class InventarioModuleConfig {
     public IRegistrarAjusteUseCase registrarAjusteUseCase(
             IVarianteRepository varianteRepository,
             IMovimientoRepository movimientoRepository) {
-        return new RegistrarAjusteUseCaseImpl(varianteRepository, movimientoRepository);
+        IRegistrarAjusteUseCase useCase =
+                new RegistrarAjusteUseCaseImpl(varianteRepository, movimientoRepository);
+        return new TransactionalRegistrarAjusteUseCase(useCase);
     }
 }

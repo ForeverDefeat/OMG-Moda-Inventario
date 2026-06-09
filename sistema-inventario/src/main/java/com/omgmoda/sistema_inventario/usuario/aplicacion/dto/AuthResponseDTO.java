@@ -1,27 +1,32 @@
 package com.omgmoda.sistema_inventario.usuario.aplicacion.dto;
 
 import com.omgmoda.sistema_inventario.usuario.dominio.RolUsuario;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-/**
- * Record de salida devuelto tras un login exitoso.
- * El frontend almacena el token y lo envía en cada
- * petición subsiguiente como Bearer token en el header Authorization.
- */
+@Schema(description = "Respuesta de autenticacion con token JWT.")
 public record AuthResponseDTO(
 
+        @Schema(description = "Token JWT usado en Authorization: Bearer <token>.")
         String token,
-        String tipo,          // siempre "Bearer"
+
+        @Schema(description = "Tipo de token.", example = "Bearer")
+        String tipo,
+
+        @Schema(description = "Rol del usuario autenticado.", example = "ADMIN")
         RolUsuario rol,
+
+        @Schema(description = "Nombre del usuario autenticado.", example = "Administrador")
         String nombre,
+
+        @Schema(description = "Correo del usuario autenticado.", example = "admin@omgmoda.com")
         String correo,
+
+        @Schema(description = "Fecha y hora de expiracion del token.")
         LocalDateTime expiracion
 
 ) {
-    /**
-     * Constructor de conveniencia con tipo Bearer por defecto.
-     */
     public static AuthResponseDTO of(String token,
                                      RolUsuario rol,
                                      String nombre,

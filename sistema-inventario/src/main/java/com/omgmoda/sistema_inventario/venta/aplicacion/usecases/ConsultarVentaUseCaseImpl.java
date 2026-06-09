@@ -32,6 +32,14 @@ public class ConsultarVentaUseCaseImpl implements IConsultarVentaUseCase {
     }
 
     @Override
+    public List<VentaResponseDTO> buscarTodas() {
+        return ventaRepository.findAll()
+                .stream()
+                .map(RegistrarVentaUseCaseImpl::toDTO)
+                .toList();
+    }
+
+    @Override
     public List<VentaResponseDTO> buscarPorUsuario(Long idUsuario) {
         return ventaRepository.findByUsuarioId(idUsuario)
                 .stream()
@@ -48,8 +56,24 @@ public class ConsultarVentaUseCaseImpl implements IConsultarVentaUseCase {
     }
 
     @Override
+    public List<VentaResponseDTO> buscarPorUsuarioYEstado(Long idUsuario, EstadoVenta estado) {
+        return ventaRepository.findByUsuarioIdAndEstado(idUsuario, estado)
+                .stream()
+                .map(RegistrarVentaUseCaseImpl::toDTO)
+                .toList();
+    }
+
+    @Override
     public List<VentaResponseDTO> buscarPorFechas(LocalDateTime desde, LocalDateTime hasta) {
         return ventaRepository.findByFechaEntre(desde, hasta)
+                .stream()
+                .map(RegistrarVentaUseCaseImpl::toDTO)
+                .toList();
+    }
+
+    @Override
+    public List<VentaResponseDTO> buscarPorUsuarioYFechas(Long idUsuario, LocalDateTime desde, LocalDateTime hasta) {
+        return ventaRepository.findByUsuarioIdAndFechaEntre(idUsuario, desde, hasta)
                 .stream()
                 .map(RegistrarVentaUseCaseImpl::toDTO)
                 .toList();

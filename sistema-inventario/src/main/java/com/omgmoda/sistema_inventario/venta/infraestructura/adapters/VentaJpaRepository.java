@@ -17,5 +17,13 @@ public interface VentaJpaRepository extends JpaRepository<VentaJpaEntity, Long> 
 
     List<VentaJpaEntity> findByEstado(EstadoVenta estado);
 
+    List<VentaJpaEntity> findByIdUsuarioAndEstado(Long idUsuario, EstadoVenta estado);
+
     List<VentaJpaEntity> findByFechaBetween(LocalDateTime desde, LocalDateTime hasta);
+
+    List<VentaJpaEntity> findByIdUsuarioAndFechaBetween(
+            Long idUsuario,
+            LocalDateTime desde,
+            LocalDateTime hasta
+    );
 }
