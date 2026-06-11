@@ -15,7 +15,18 @@ export const productsApi = {
     return apiRequest<Variant[]>(`/productos/variantes${query(filters)}`)
   },
 
-  createProduct(payload: CreateProductRequest) {
+  createProduct(payload: CreateProductRequest, imageFile?: File | null) {
+    if (imageFile) {
+      const formData = new FormData()
+      formData.append('producto', new Blob([JSON.stringify(payload)], { type: 'application/json' }))
+      formData.append('imagen', imageFile)
+
+      return apiRequest<Variant[]>('/productos', {
+        method: 'POST',
+        body: formData,
+      })
+    }
+
     return apiRequest<Variant[]>('/productos', {
       method: 'POST',
       body: JSON.stringify(payload),

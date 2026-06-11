@@ -47,6 +47,7 @@ public class BuscarVariantesUseCaseImpl implements IBuscarVariantesUseCase {
                 v.getProducto().getNombre(),
                 v.getProducto().getCategoria(),
                 v.getProducto().getMarca(),
+                v.getProducto().getImageUrl(),
                 v.getTalla(),
                 v.getColor(),
                 v.getMaterial(),

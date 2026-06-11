@@ -7,8 +7,8 @@ import { StockBadge } from './Badge'
 
 export function ProductPriceCard({ variant, onAdd, compact = false }: { variant: Variant; onAdd?: (variant: Variant) => void; compact?: boolean }) {
   return (
-    <article className={cn('group overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] transition-colors hover:border-black/50', compact ? 'flex flex-col' : 'dashboard-card')}>
-      <div className={cn('relative overflow-hidden bg-[var(--color-bg)]', compact ? 'aspect-[4/3]' : 'aspect-[4/3]')}>
+    <article className={cn('group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] transition-colors hover:border-black/50', compact ? 'shadow-sm' : 'dashboard-card')}>
+      <div className={cn('relative shrink-0 overflow-hidden bg-[var(--color-bg)]', compact ? 'h-40 sm:h-44' : 'h-52 sm:h-56')}>
         <img
           src={getVariantImage(variant)}
           alt={variant.nombreProducto}
@@ -25,10 +25,10 @@ export function ProductPriceCard({ variant, onAdd, compact = false }: { variant:
           </div>
         )}
       </div>
-      <div className={cn('flex flex-1 flex-col gap-3 p-4', compact && 'p-3')}>
+      <div className={cn('flex flex-1 flex-col gap-3 p-4', compact && 'gap-2 p-3')}>
         <div>
           <h3 className="line-clamp-1 font-bold leading-tight text-[var(--color-text)]">{variant.nombreProducto}</h3>
-          <p className="text-sm text-[var(--color-muted)]">{variant.categoria} / {variant.talla} / {variant.color}</p>
+          <p className="line-clamp-1 text-sm text-[var(--color-muted)]">{variant.categoria} / {variant.talla} / {variant.color}</p>
         </div>
         <div className="mt-auto flex items-center justify-between gap-3">
           <span className="text-sm font-semibold text-[var(--color-muted)]">{variant.stockActual} en stock</span>

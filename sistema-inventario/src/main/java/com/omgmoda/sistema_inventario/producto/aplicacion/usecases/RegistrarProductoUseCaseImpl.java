@@ -27,7 +27,7 @@ public class RegistrarProductoUseCaseImpl implements IRegistrarProductoUseCase {
     public List<VarianteResponseDTO> registrar(CrearProductoDTO dto) {
 
         // 1. Crear el Aggregate Root en el dominio
-        Producto producto = new Producto(dto.nombre(), dto.categoria(), dto.marca());
+        Producto producto = new Producto(dto.nombre(), dto.categoria(), dto.marca(), dto.imageUrl());
 
         // 2. Delegar la creación de cada variante al propio agregado
         List<VarianteProducto> variantesDominio = dto.variantes().stream()
@@ -60,6 +60,7 @@ public class RegistrarProductoUseCaseImpl implements IRegistrarProductoUseCase {
                 p.getNombre(),
                 p.getCategoria(),
                 p.getMarca(),
+                p.getImageUrl(),
                 v.getTalla(),
                 v.getColor(),
                 v.getMaterial(),

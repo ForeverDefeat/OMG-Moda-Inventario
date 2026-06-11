@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Minus, Plus, Receipt, ShoppingCart, Trash2 } from 'lucide-react'
 import type { Variant } from '../../catalog/domain/types'
 import { productsApi } from '../../../infra/api/productsApi'
@@ -26,12 +27,15 @@ const salesColumns: Column<(typeof mockSales)[number]>[] = [
 ]
 
 export function SalesPosPage() {
+  const [searchParams] = useSearchParams()
+  const urlQuery = searchParams.get('q') ?? ''
   const [variants, setVariants] = useState(mockVariants)
-  const [query, setQuery] = useState('')
+  const [queryState, setQueryState] = useState(() => ({ source: urlQuery, value: urlQuery }))
   const [cart, setCart] = useState<CartItem[]>([])
   const [payment, setPayment] = useState('EFECTIVO')
   const [message, setMessage] = useState('POS listo para vender.')
   const [sales, setSales] = useState(mockSales)
+  const query = queryState.source === urlQuery ? queryState.value : urlQuery
 
   useEffect(() => {
     productsApi.listVariants()
@@ -135,7 +139,7 @@ export function SalesPosPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_384px]">
       <div className="page-grid">
-        <SearchInput value={query} onChange={setQuery} placeholder="Buscar producto para vender" />
+        <SearchInput value={query} onChange={(value) => setQueryState({ source: urlQuery, value })} placeholder="Buscar producto para vender" />
 
         <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
           {filtered.slice(0, 8).map((variant) => (

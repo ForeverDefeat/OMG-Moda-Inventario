@@ -1,4 +1,5 @@
 import type { Variant } from '../../features/catalog/domain/types'
+import { API_ORIGIN } from '../../infra/api/httpClient'
 
 const categoryImages: Record<string, string> = {
   camisas: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&q=80',
@@ -11,5 +12,8 @@ const categoryImages: Record<string, string> = {
 
 export function getVariantImage(variant: Pick<Variant, 'categoria' | 'imageUrl'>) {
   const key = variant.categoria.toLowerCase()
+  if (variant.imageUrl?.startsWith('/uploads/')) {
+    return `${API_ORIGIN}${variant.imageUrl}`
+  }
   return variant.imageUrl ?? categoryImages[key] ?? 'https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=400&q=80'
 }

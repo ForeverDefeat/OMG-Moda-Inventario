@@ -18,23 +18,34 @@ public class Producto {
     private String nombre;
     private String categoria;
     private String marca;
+    private String imageUrl;
     private final List<VarianteProducto> variantes = new ArrayList<>();
 
     // Constructor para reconstitución desde persistencia
     public Producto(Long id, String nombre, String categoria, String marca) {
+        this(id, nombre, categoria, marca, null);
+    }
+
+    public Producto(Long id, String nombre, String categoria, String marca, String imageUrl) {
         validar(nombre, categoria, marca);
         this.id = id;
         this.nombre = nombre;
         this.categoria = categoria;
         this.marca = marca;
+        this.imageUrl = normalizarImageUrl(imageUrl);
     }
 
     // Constructor para creación nueva (sin id, lo asigna la BD)
     public Producto(String nombre, String categoria, String marca) {
+        this(nombre, categoria, marca, null);
+    }
+
+    public Producto(String nombre, String categoria, String marca, String imageUrl) {
         validar(nombre, categoria, marca);
         this.nombre = nombre;
         this.categoria = categoria;
         this.marca = marca;
+        this.imageUrl = normalizarImageUrl(imageUrl);
     }
 
     /**
@@ -75,10 +86,16 @@ public class Producto {
 
     // ── Getters (sin setters: inmutabilidad controlada) ────────────────────────
 
+    private String normalizarImageUrl(String value) {
+        if (value == null || value.isBlank()) return null;
+        return value.trim();
+    }
+
     public Long getId() { return id; }
     public String getNombre() { return nombre; }
     public String getCategoria() { return categoria; }
     public String getMarca() { return marca; }
+    public String getImageUrl() { return imageUrl; }
     public List<VarianteProducto> getVariantes() {
         return Collections.unmodifiableList(variantes);
     }

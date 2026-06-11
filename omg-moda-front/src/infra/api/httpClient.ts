@@ -1,6 +1,7 @@
 import type { AuthSession } from '../../features/auth/domain/types'
 
-const API_BASE_URL = 'http://localhost:8080/api/v1'
+export const API_ORIGIN = 'http://localhost:8080'
+const API_BASE_URL = `${API_ORIGIN}/api/v1`
 const SESSION_KEY = 'clothwise.session'
 
 export class ApiError extends Error {
@@ -61,7 +62,9 @@ export async function apiRequest<T>(
   const session = readStoredSession()
   const headers = new Headers(options.headers)
 
-  if (!headers.has('Content-Type') && options.body) {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+
+  if (!headers.has('Content-Type') && options.body && !isFormData) {
     headers.set('Content-Type', 'application/json')
   }
 

@@ -25,13 +25,21 @@ public class ProductoJpaEntity {
     @Column(name = "marca", nullable = false, length = 50)
     private String marca;
 
+    @Column(name = "imagen_url", length = 500)
+    private String imageUrl;
+
     // Constructor vacío requerido por JPA
     public ProductoJpaEntity() {}
 
     public ProductoJpaEntity(String nombre, String categoria, String marca) {
+        this(nombre, categoria, marca, null);
+    }
+
+    public ProductoJpaEntity(String nombre, String categoria, String marca, String imageUrl) {
         this.nombre = nombre;
         this.categoria = categoria;
         this.marca = marca;
+        this.imageUrl = imageUrl;
     }
 
     // ── Getters y Setters ──────────────────────────────────────────────────────
@@ -44,4 +52,6 @@ public class ProductoJpaEntity {
     public void setCategoria(String c)    { this.categoria = c; }
     public String getMarca()              { return marca; }
     public void setMarca(String marca)    { this.marca = marca; }
+    public String getImageUrl()           { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

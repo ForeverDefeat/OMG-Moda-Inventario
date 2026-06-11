@@ -21,6 +21,7 @@ export interface CreateProductRequest {
   nombre: string
   categoria: string
   marca: string
+  imageUrl?: string
   variantes: Array<{
     talla: string
     color: string

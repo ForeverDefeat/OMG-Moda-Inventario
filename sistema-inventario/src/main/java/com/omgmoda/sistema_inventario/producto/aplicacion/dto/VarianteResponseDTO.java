@@ -18,6 +18,8 @@ public record VarianteResponseDTO(
         String categoria,
         @Schema(description = "Marca del producto.", example = "OMG MODA")
         String marca,
+        @Schema(description = "Direccion publica de la imagen del producto.", example = "/uploads/productos/camisa-oxford.webp")
+        String imageUrl,
         @Schema(description = "Talla de la variante.", example = "M")
         String talla,
         @Schema(description = "Color de la variante.", example = "Azul")

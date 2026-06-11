@@ -30,6 +30,10 @@ public record CrearProductoDTO(
         @Schema(description = "Marca del producto.", example = "OMG MODA")
         String marca,
 
+        @Size(max = 500, message = "La URL de imagen no puede superar 500 caracteres.")
+        @Schema(description = "Direccion publica de la imagen del producto.", example = "/uploads/productos/camisa-oxford.webp")
+        String imageUrl,
+
         @NotEmpty(message = "Debe incluir al menos una variante.")
         @Valid
         @Schema(description = "Variantes iniciales del producto.")

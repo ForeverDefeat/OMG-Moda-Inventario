@@ -31,6 +31,7 @@ class RegistrarProductoUseCaseImplTest {
                 "Camisa Oxford",
                 "Camisas",
                 "OMG MODA",
+                "https://cdn.example.com/camisa.webp",
                 List.of(new CrearProductoDTO.VarianteDTO(
                         "M",
                         "Azul",
@@ -45,6 +46,7 @@ class RegistrarProductoUseCaseImplTest {
         assertThat(respuesta).hasSize(1);
         assertThat(respuesta.get(0).idVariante()).isEqualTo(100L);
         assertThat(respuesta.get(0).nombreProducto()).isEqualTo("Camisa Oxford");
+        assertThat(respuesta.get(0).imageUrl()).isEqualTo("https://cdn.example.com/camisa.webp");
         assertThat(respuesta.get(0).stockActual()).isZero();
         verify(varianteRepository).save(any(VarianteProducto.class));
     }

@@ -77,7 +77,8 @@ public class JpaVarianteAdapter implements IVarianteRepository {
         ProductoJpaEntity productoEntity = new ProductoJpaEntity(
                 v.getProducto().getNombre(),
                 v.getProducto().getCategoria(),
-                v.getProducto().getMarca()
+                v.getProducto().getMarca(),
+                v.getProducto().getImageUrl()
         );
         productoEntity.setId(v.getProducto().getId());
 
@@ -97,7 +98,8 @@ public class JpaVarianteAdapter implements IVarianteRepository {
                 e.getProducto().getId(),
                 e.getProducto().getNombre(),
                 e.getProducto().getCategoria(),
-                e.getProducto().getMarca()
+                e.getProducto().getMarca(),
+                e.getProducto().getImageUrl()
         );
         return new VarianteProducto(
                 e.getId(),

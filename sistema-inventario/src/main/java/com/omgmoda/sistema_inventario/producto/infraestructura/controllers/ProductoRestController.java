@@ -4,6 +4,7 @@ import com.omgmoda.sistema_inventario.producto.aplicacion.dto.CrearProductoDTO;
 import com.omgmoda.sistema_inventario.producto.aplicacion.dto.VarianteResponseDTO;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IBuscarVariantesUseCase;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IRegistrarProductoUseCase;
+import com.omgmoda.sistema_inventario.producto.infraestructura.storage.ProductoImageStorageService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,9 +12,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,11 +33,14 @@ public class ProductoRestController {
 
     private final IRegistrarProductoUseCase registrarProductoUseCase;
     private final IBuscarVariantesUseCase buscarVariantesUseCase;
+    private final ProductoImageStorageService imageStorageService;
 
     public ProductoRestController(IRegistrarProductoUseCase registrarProductoUseCase,
-                                  IBuscarVariantesUseCase buscarVariantesUseCase) {
+                                  IBuscarVariantesUseCase buscarVariantesUseCase,
+                                  ProductoImageStorageService imageStorageService) {
         this.registrarProductoUseCase = registrarProductoUseCase;
         this.buscarVariantesUseCase = buscarVariantesUseCase;
+        this.imageStorageService = imageStorageService;
     }
 
     /**
@@ -42,7 +48,7 @@ public class ProductoRestController {
      * Registra un producto nuevo con sus variantes iniciales.
      * Acceso: solo ADMIN.
      */
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Crear producto con variantes",
@@ -51,6 +57,27 @@ public class ProductoRestController {
     public ResponseEntity<List<VarianteResponseDTO>> crearProducto(
             @Valid @RequestBody CrearProductoDTO dto) {
         List<VarianteResponseDTO> resultado = registrarProductoUseCase.registrar(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Crear producto con imagen subida",
+            description = "Registra un producto nuevo y guarda una imagen opcional en uploads/productos. Requiere rol ADMIN."
+    )
+    public ResponseEntity<List<VarianteResponseDTO>> crearProductoConImagen(
+            @Valid @RequestPart("producto") CrearProductoDTO dto,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
+        String imageUrl = imageStorageService.store(imagen);
+        CrearProductoDTO dtoConImagen = new CrearProductoDTO(
+                dto.nombre(),
+                dto.categoria(),
+                dto.marca(),
+                imageUrl != null ? imageUrl : dto.imageUrl(),
+                dto.variantes()
+        );
+        List<VarianteResponseDTO> resultado = registrarProductoUseCase.registrar(dtoConImagen);
         return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
     }
 
