@@ -18,9 +18,12 @@ import java.util.Optional;
 public class JpaVarianteAdapter implements IVarianteRepository {
 
     private final VarianteJpaRepository jpaRepository;
+    private final ProductoJpaRepository productoJpaRepository;
 
-    public JpaVarianteAdapter(VarianteJpaRepository jpaRepository) {
+    public JpaVarianteAdapter(VarianteJpaRepository jpaRepository,
+                              ProductoJpaRepository productoJpaRepository) {
         this.jpaRepository = jpaRepository;
+        this.productoJpaRepository = productoJpaRepository;
     }
 
     @Override
@@ -74,13 +77,7 @@ public class JpaVarianteAdapter implements IVarianteRepository {
         VarianteJpaEntity entity = new VarianteJpaEntity();
         entity.setId(v.getId());
 
-        ProductoJpaEntity productoEntity = new ProductoJpaEntity(
-                v.getProducto().getNombre(),
-                v.getProducto().getCategoria(),
-                v.getProducto().getMarca(),
-                v.getProducto().getImageUrl()
-        );
-        productoEntity.setId(v.getProducto().getId());
+        ProductoJpaEntity productoEntity = obtenerProductoPersistido(v.getProducto());
 
         entity.setProducto(productoEntity);
         entity.setTalla(v.getTalla());
@@ -91,6 +88,27 @@ public class JpaVarianteAdapter implements IVarianteRepository {
         entity.setStockActual(v.getStockActual());
         entity.setStockMinimo(v.getStockMinimo());
         return entity;
+    }
+
+    private ProductoJpaEntity obtenerProductoPersistido(Producto producto) {
+        if (producto.getId() != null) {
+            ProductoJpaEntity existente = productoJpaRepository.getReferenceById(producto.getId());
+            existente.setNombre(producto.getNombre());
+            existente.setCategoria(producto.getCategoria());
+            existente.setMarca(producto.getMarca());
+            existente.setImageUrl(producto.getImageUrl());
+            return existente;
+        }
+
+        ProductoJpaEntity nuevo = new ProductoJpaEntity(
+                producto.getNombre(),
+                producto.getCategoria(),
+                producto.getMarca(),
+                producto.getImageUrl()
+        );
+        ProductoJpaEntity guardado = productoJpaRepository.save(nuevo);
+        producto.setId(guardado.getId());
+        return guardado;
     }
 
     private VarianteProducto toDomain(VarianteJpaEntity e) {

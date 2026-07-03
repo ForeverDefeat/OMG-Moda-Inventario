@@ -1,8 +1,9 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Bell, LogOut, Menu, Search, Shirt } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../features/auth/application/useAuth'
-import { mockVariants } from '../../infra/mock/mockData'
+import type { Variant } from '../../features/catalog/domain/types'
+import { productsApi } from '../../infra/api/productsApi'
 import { Drawer } from '../../shared/components/Drawer'
 import { IconButton } from '../../shared/components/IconButton'
 import { cn } from '../../shared/utils/cn'
@@ -50,9 +51,16 @@ export function HeaderBar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const [productSuggestionsSource, setProductSuggestionsSource] = useState<Variant[]>([])
   const copy = titles[pathname] ?? titles['/dashboard']
   const searchTerm = search.trim()
   const encodedSearch = encodeURIComponent(searchTerm)
+
+  useEffect(() => {
+    productsApi.listVariants()
+      .then(setProductSuggestionsSource)
+      .catch(() => setProductSuggestionsSource([]))
+  }, [])
 
   const searchSuggestions = useMemo(() => {
     if (!searchTerm) return []
@@ -67,7 +75,7 @@ export function HeaderBar() {
         href: item.href,
       }))
 
-    const productMatches = mockVariants
+    const productMatches = productSuggestionsSource
       .filter((variant) =>
         [variant.nombreProducto, variant.categoria, variant.color, variant.talla]
           .some((field) => normalizeSearch(field).includes(normalized)),
@@ -90,7 +98,7 @@ export function HeaderBar() {
       meta: 'Catalogo de productos',
       href: `/catalogo?q=${encodedSearch}`,
     }]
-  }, [encodedSearch, searchTerm])
+  }, [encodedSearch, productSuggestionsSource, searchTerm])
 
   function goToSearchResult(href: string) {
     navigate(href)

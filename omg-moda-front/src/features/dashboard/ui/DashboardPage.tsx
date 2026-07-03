@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, Boxes, CircleDollarSign, ClipboardList, ShoppingBag, SlidersHorizontal } from 'lucide-react'
 import { BarMetricChart } from '../../../shared/charts/BarMetricChart'
@@ -8,11 +8,10 @@ import { ChartCard } from '../../../shared/components/ChartCard'
 import { DataTable, type Column } from '../../../shared/components/DataTable'
 import { KpiCard } from '../../../shared/components/KpiCard'
 import { StatusBadge } from '../../../shared/components/Badge'
-import { categoryData, mockPurchaseSuggestions, mockVariants, reportBars, trendData } from '../../../infra/mock/mockData'
+import { dashboardApi } from '../../../infra/api/dashboardApi'
 import { cn } from '../../../shared/utils/cn'
+import type { DashboardResponse, MetricDatum } from '../domain/types'
 import type { PurchaseSuggestion } from '../../purchase-orders/domain/types'
-
-type ChartDatum = { name: string; value: number }
 
 const periodOptions = [
   { value: '7d', label: '7 dias' },
@@ -29,71 +28,18 @@ const channelOptions = [
 
 type SalesChannel = (typeof channelOptions)[number]['value']
 
-const channelFactors: Record<SalesChannel, number> = {
-  all: 1,
-  pos: 0.78,
-  online: 0.22,
-}
-
-const trendByPeriod: Record<DashboardPeriod, ChartDatum[]> = {
-  today: [
-    { name: '09h', value: 280 },
-    { name: '11h', value: 390 },
-    { name: '13h', value: 315 },
-    { name: '15h', value: 525 },
-    { name: '17h', value: 420 },
-    { name: '19h', value: 480 },
-  ],
-  '7d': trendData,
-}
-
-const categoriesByPeriod: Record<DashboardPeriod, ChartDatum[]> = {
-  today: [
-    { name: 'Camisas', value: 18 },
-    { name: 'Vestidos', value: 12 },
-    { name: 'Sacos', value: 10 },
-    { name: 'Tops', value: 9 },
-  ],
-  '7d': categoryData,
-}
-
-const rotationOptions = ['Todas', 'Camisas', 'Vestidos', 'Sacos', 'Tops'] as const
-type RotationCategory = (typeof rotationOptions)[number]
-
-const rotationByCategory: Record<RotationCategory, ChartDatum[]> = {
-  Todas: reportBars,
-  Camisas: [
-    { name: 'Ene', value: 24 },
-    { name: 'Feb', value: 32 },
-    { name: 'Mar', value: 38 },
-    { name: 'Abr', value: 35 },
-    { name: 'May', value: 48 },
-    { name: 'Jun', value: 52 },
-  ],
-  Vestidos: [
-    { name: 'Ene', value: 18 },
-    { name: 'Feb', value: 21 },
-    { name: 'Mar', value: 29 },
-    { name: 'Abr', value: 26 },
-    { name: 'May', value: 34 },
-    { name: 'Jun', value: 41 },
-  ],
-  Sacos: [
-    { name: 'Ene', value: 12 },
-    { name: 'Feb', value: 16 },
-    { name: 'Mar', value: 22 },
-    { name: 'Abr', value: 18 },
-    { name: 'May', value: 25 },
-    { name: 'Jun', value: 30 },
-  ],
-  Tops: [
-    { name: 'Ene', value: 30 },
-    { name: 'Feb', value: 34 },
-    { name: 'Mar', value: 37 },
-    { name: 'Abr', value: 42 },
-    { name: 'May', value: 47 },
-    { name: 'Jun', value: 55 },
-  ],
+const emptyDashboard: DashboardResponse = {
+  kpis: {
+    valorStock: 0,
+    skusActivos: 0,
+    alertasStock: 0,
+    ventasPeriodo: 0,
+    comprasSugeridas: 0,
+  },
+  ventasTendencia: [],
+  ventasCategoria: [],
+  rotacion: [],
+  sugerencias: [],
 }
 
 const columns: Column<PurchaseSuggestion>[] = [
@@ -116,7 +62,7 @@ const columns: Column<PurchaseSuggestion>[] = [
 ]
 
 function formatCurrency(value: number) {
-  return `S/ ${value.toLocaleString('es-PE')}`
+  return `S/ ${value.toLocaleString('es-PE', { maximumFractionDigits: 2 })}`
 }
 
 function formatCurrencyCompact(value: number) {
@@ -160,26 +106,44 @@ function MetricPill({ label, value }: { label: string; value: string }) {
 export function DashboardPage() {
   const [period, setPeriod] = useState<DashboardPeriod>('today')
   const [salesChannel, setSalesChannel] = useState<SalesChannel>('all')
-  const [rotationCategory, setRotationCategory] = useState<RotationCategory>('Todas')
+  const [rotationCategory, setRotationCategory] = useState('Todas')
+  const [dashboard, setDashboard] = useState<DashboardResponse>(emptyDashboard)
+  const [status, setStatus] = useState('Cargando panel desde backend.')
 
-  const stockValue = mockVariants.reduce((total, variant) => total + variant.precioCosto * variant.stockActual, 0)
-  const lowStock = mockVariants.filter((variant) => variant.stockActual <= variant.stockMinimo).length
+  useEffect(() => {
+    const categoria = rotationCategory === 'Todas' ? undefined : rotationCategory
+    dashboardApi.getDashboard({ periodo: period, canal: salesChannel, categoria })
+      .then((data) => {
+        setDashboard(data)
+        setStatus('Panel conectado al backend.')
+      })
+      .catch(() => {
+        setDashboard(emptyDashboard)
+        setStatus('Backend no disponible. No se muestran datos mock.')
+      })
+  }, [period, rotationCategory, salesChannel])
 
-  const activeTrend = useMemo(() => {
-    const factor = channelFactors[salesChannel]
-    return trendByPeriod[period].map((item) => ({
-      ...item,
-      value: Math.round(item.value * factor),
-    }))
-  }, [period, salesChannel])
+  const rotationOptions = useMemo(() => {
+    const categories = dashboard.ventasCategoria.map((item) => item.name)
+    return ['Todas', ...Array.from(new Set(categories))]
+  }, [dashboard.ventasCategoria])
 
-  const totalSales = activeTrend.reduce((sum, item) => sum + item.value, 0)
-  const peakSale = activeTrend.reduce((peak, item) => item.value > peak.value ? item : peak, activeTrend[0])
-  const averageSale = Math.round(totalSales / activeTrend.length)
-  const activeCategories = categoriesByPeriod[period]
-  const activeRotation = rotationByCategory[rotationCategory]
-  const rotationPeak = activeRotation.reduce((peak, item) => item.value > peak.value ? item : peak, activeRotation[0])
-  const rotationAverage = Math.round(activeRotation.reduce((sum, item) => sum + item.value, 0) / activeRotation.length)
+  const activeTrend = dashboard.ventasTendencia
+  const totalSales = dashboard.kpis.ventasPeriodo
+  const peakSale = activeTrend.reduce<MetricDatum>(
+    (peak, item) => item.value > peak.value ? item : peak,
+    { name: '-', value: 0 },
+  )
+  const averageSale = activeTrend.length ? Math.round(totalSales / activeTrend.length) : 0
+  const activeCategories = dashboard.ventasCategoria
+  const activeRotation = dashboard.rotacion
+  const rotationPeak = activeRotation.reduce<MetricDatum>(
+    (peak, item) => item.value > peak.value ? item : peak,
+    { name: '-', value: 0 },
+  )
+  const rotationAverage = activeRotation.length
+    ? Math.round(activeRotation.reduce((sum, item) => sum + item.value, 0) / activeRotation.length)
+    : 0
   const salesLabel = period === 'today' ? 'Ventas de hoy' : 'Ventas 7 dias'
   const salesHelper = salesChannel === 'all'
     ? `${period === 'today' ? 'jornada activa' : 'semana movil'}`
@@ -190,7 +154,7 @@ export function DashboardPage() {
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="panel-title">Panel de Control</h1>
-          <p className="text-sm text-[var(--color-muted)]">Resumen ejecutivo de stock, ventas y reposicion.</p>
+          <p className="text-sm text-[var(--color-muted)]">{status}</p>
         </div>
         <div className="flex gap-2" role="group" aria-label="Periodo del panel">
           {periodOptions.map((option) => (
@@ -213,11 +177,11 @@ export function DashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <KpiCard label="Valor del stock" value={formatCurrency(stockValue)} helper="+8% esta semana" icon={CircleDollarSign} />
-        <KpiCard label="SKUs activos" value={String(mockVariants.length)} helper="6 categorias" icon={Boxes} tone="success" />
-        <KpiCard label="Alertas de stock" value={String(lowStock)} helper="requieren accion" icon={AlertTriangle} tone="warning" />
+        <KpiCard label="Valor del stock" value={formatCurrency(dashboard.kpis.valorStock)} helper="desde inventario" icon={CircleDollarSign} />
+        <KpiCard label="SKUs activos" value={String(dashboard.kpis.skusActivos)} helper="productos reales" icon={Boxes} tone="success" />
+        <KpiCard label="Alertas de stock" value={String(dashboard.kpis.alertasStock)} helper="requieren accion" icon={AlertTriangle} tone="warning" />
         <KpiCard label={salesLabel} value={formatCurrency(totalSales)} helper={salesHelper} icon={ShoppingBag} tone="primary" />
-        <KpiCard label="Compras sugeridas" value={String(mockPurchaseSuggestions.length)} helper="bajo stock" icon={ClipboardList} tone="danger" />
+        <KpiCard label="Compras sugeridas" value={String(dashboard.kpis.comprasSugeridas)} helper="bajo stock" icon={ClipboardList} tone="danger" />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
@@ -256,7 +220,7 @@ export function DashboardPage() {
               label="Filtrar categoria de rotacion"
               value={rotationCategory}
               options={rotationOptions.map((option) => ({ value: option, label: option }))}
-              onChange={(value) => setRotationCategory(value as RotationCategory)}
+              onChange={setRotationCategory}
             />
           )}
         >
@@ -273,7 +237,7 @@ export function DashboardPage() {
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-bold">Sugerencias de reposicion</h2>
-              <p className="text-sm text-[var(--color-muted)]">Acciones rapidas inspiradas en el panel Banana AI.</p>
+              <p className="text-sm text-[var(--color-muted)]">Acciones calculadas desde stock real.</p>
             </div>
             <Link
               to="/compras"
@@ -282,7 +246,7 @@ export function DashboardPage() {
               Ver compras
             </Link>
           </div>
-          <DataTable rows={mockPurchaseSuggestions.slice(0, 3)} columns={columns} />
+          <DataTable rows={dashboard.sugerencias} columns={columns} emptyText="Sin sugerencias de reposicion" />
         </div>
       </section>
     </div>

@@ -7,3 +7,12 @@ export interface Customer {
   totalCompras: number
   ultimaCompra: string
 }
+
+export interface CreateCustomerRequest {
+  nombre: string
+  correo: string
+  telefono: string
+  segmento: Customer['segmento']
+  totalCompras?: number
+  ultimaCompra?: string
+}

@@ -6,7 +6,8 @@ const colors = [
 ]
 
 export function DonutMetricChart({ data }: { data: Array<{ name: string; value: number }> }) {
-  const total = data.reduce((sum, item) => sum + item.value, 0) || 1
+  const rawTotal = data.reduce((sum, item) => sum + item.value, 0)
+  const total = rawTotal || 1
   const size = 240
   const center = size / 2
   const radius = 78
@@ -38,7 +39,7 @@ export function DonutMetricChart({ data }: { data: Array<{ name: string; value: 
             />
         ))}
         <text x={center} y={center - 4} textAnchor="middle" fill="var(--color-text)" fontSize="28" fontWeight="700">
-          {total}
+          {rawTotal}
         </text>
         <text x={center} y={center + 20} textAnchor="middle" fill="var(--color-muted)" fontSize="12">
           total

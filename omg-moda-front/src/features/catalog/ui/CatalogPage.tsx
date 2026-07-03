@@ -4,7 +4,6 @@ import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Link as LinkIcon, PackagePlus, Plus, SlidersHorizontal, Trash2, Upload } from 'lucide-react'
 import type { CreateProductRequest, Variant } from '../domain/types'
 import { productsApi } from '../../../infra/api/productsApi'
-import { mockVariants } from '../../../infra/mock/mockData'
 import { ActionButton } from '../../../shared/components/ActionButton'
 import { Modal } from '../../../shared/components/Modal'
 import { ProductPriceCard } from '../../../shared/components/ProductPriceCard'
@@ -81,13 +80,13 @@ function imageFileError(file: File) {
 export function CatalogPage() {
   const [searchParams] = useSearchParams()
   const urlQuery = searchParams.get('q') ?? ''
-  const [variants, setVariants] = useState<Variant[]>(mockVariants)
+  const [variants, setVariants] = useState<Variant[]>([])
   const [queryState, setQueryState] = useState(() => ({ source: urlQuery, value: urlQuery }))
   const [activeCategory, setActiveCategory] = useState('Todas')
   const [stockFilter, setStockFilter] = useState<StockFilter>('Todos')
   const [gridColumns, setGridColumns] = useState<GridColumns>(3)
   const [page, setPage] = useState(1)
-  const [status, setStatus] = useState('Usando datos de referencia hasta conectar backend.')
+  const [status, setStatus] = useState('Cargando catalogo desde backend.')
   const [modalOpen, setModalOpen] = useState(false)
   const [draft, setDraft] = useState<CreateProductRequest>(emptyProduct)
   const [imageMode, setImageMode] = useState<ImageMode>('url')
@@ -99,10 +98,13 @@ export function CatalogPage() {
   useEffect(() => {
     productsApi.listVariants()
       .then((data) => {
-        setVariants(data.length ? data : mockVariants)
-        setStatus('Catalogo conectado al backend.')
+        setVariants(data)
+        setStatus(data.length ? 'Catalogo conectado al backend.' : 'Backend conectado sin productos registrados.')
       })
-      .catch(() => setStatus('Backend no disponible: se muestran datos mock.'))
+      .catch(() => {
+        setVariants([])
+        setStatus('Backend no disponible. No se muestran datos mock.')
+      })
   }, [])
 
   const filtered = useMemo(() => {
@@ -144,27 +146,7 @@ export function CatalogPage() {
       setStatus('Producto creado en backend.')
       closeCreateModal()
     } catch {
-      const idProducto = Date.now()
-      const localImageUrl = imageMode === 'upload' ? imagePreviewUrl : payload.imageUrl
-      const mockCreated: Variant[] = payload.variantes.map((variant, index) => ({
-        idVariante: idProducto + index,
-        idProducto,
-        nombreProducto: payload.nombre,
-        categoria: payload.categoria,
-        marca: payload.marca,
-        talla: variant.talla,
-        color: variant.color,
-        material: variant.material,
-        precioCosto: variant.precioCosto,
-        precioVenta: variant.precioVenta,
-        stockActual: 0,
-        stockMinimo: 5,
-        stockStatus: 'SIN_STOCK',
-        imageUrl: localImageUrl,
-      }))
-      setVariants((current) => [...mockCreated, ...current])
-      setStatus('Producto agregado localmente porque el backend no respondio.')
-      closeCreateModal({ preservePreview: imageMode === 'upload' && Boolean(imagePreviewUrl) })
+      setStatus('No se pudo crear el producto en backend. Revisa la conexion o los datos enviados.')
     }
   }
 

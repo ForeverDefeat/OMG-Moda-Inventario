@@ -2,6 +2,7 @@ package com.omgmoda.sistema_inventario.usuario.infraestructura.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * Configuración central de Spring Security.
@@ -38,9 +40,12 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String allowedOrigins;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          @Value("${spring.web.cors.allowed-origins:http://localhost:5173}") String allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
@@ -91,11 +96,19 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/ventas/**")
                         .hasAnyRole("ADMIN", "VENDEDOR")
 
+                    .requestMatchers("/api/v1/dashboard/**")
+                        .hasAnyRole("ADMIN", "VENDEDOR")
+
                     // Reportes
                     .requestMatchers("/api/v1/reportes/**")
                         .hasRole("ADMIN")
 
                     // Cualquier otra ruta requiere autenticación
+                    .requestMatchers("/api/v1/clientes/**")
+                        .hasRole("ADMIN")
+                    .requestMatchers("/api/v1/compras/**")
+                        .hasRole("ADMIN")
+
                     .anyRequest().authenticated()
             )
 
@@ -116,7 +129,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:5173", "https://*.omgmoda.com"));
+        config.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);

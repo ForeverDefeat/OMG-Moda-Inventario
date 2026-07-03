@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Minus, Plus, Receipt, ShoppingCart, Trash2 } from 'lucide-react'
 import type { Variant } from '../../catalog/domain/types'
+import type { SaleResponse } from '../domain/types'
 import { productsApi } from '../../../infra/api/productsApi'
 import { salesApi } from '../../../infra/api/salesApi'
-import { mockSales, mockVariants } from '../../../infra/mock/mockData'
 import { ActionButton } from '../../../shared/components/ActionButton'
 import { BarMetricChart } from '../../../shared/charts/BarMetricChart'
 import { ChartCard } from '../../../shared/components/ChartCard'
@@ -19,7 +19,7 @@ interface CartItem {
   quantity: number
 }
 
-const salesColumns: Column<(typeof mockSales)[number]>[] = [
+const salesColumns: Column<SaleResponse>[] = [
   { key: 'id', header: 'Venta', render: (row) => `#${row.idVenta}` },
   { key: 'fecha', header: 'Fecha', render: (row) => new Date(row.fecha).toLocaleString('es-PE') },
   { key: 'metodo', header: 'Metodo', render: (row) => row.metodoPago },
@@ -29,22 +29,28 @@ const salesColumns: Column<(typeof mockSales)[number]>[] = [
 export function SalesPosPage() {
   const [searchParams] = useSearchParams()
   const urlQuery = searchParams.get('q') ?? ''
-  const [variants, setVariants] = useState(mockVariants)
+  const [variants, setVariants] = useState<Variant[]>([])
   const [queryState, setQueryState] = useState(() => ({ source: urlQuery, value: urlQuery }))
   const [cart, setCart] = useState<CartItem[]>([])
   const [payment, setPayment] = useState('EFECTIVO')
-  const [message, setMessage] = useState('POS listo para vender.')
-  const [sales, setSales] = useState(mockSales)
+  const [message, setMessage] = useState('Cargando POS desde backend.')
+  const [sales, setSales] = useState<SaleResponse[]>([])
   const query = queryState.source === urlQuery ? queryState.value : urlQuery
 
   useEffect(() => {
     productsApi.listVariants()
-      .then((data) => setVariants(data.length ? data : mockVariants))
-      .catch(() => setVariants(mockVariants))
+      .then((data) => {
+        setVariants(data)
+        setMessage(data.length ? 'POS listo para vender.' : 'Backend conectado sin productos disponibles.')
+      })
+      .catch(() => {
+        setVariants([])
+        setMessage('Backend no disponible. No se muestran productos mock.')
+      })
 
     salesApi.listSales()
-      .then((data) => setSales(data.length ? data : mockSales))
-      .catch(() => setSales(mockSales))
+      .then((data) => setSales(data))
+      .catch(() => setSales([]))
   }, [])
 
   const filtered = useMemo(() => {
@@ -55,11 +61,23 @@ export function SalesPosPage() {
   }, [variants, query])
 
   const total = cart.reduce((sum, item) => sum + item.variant.precioVenta * item.quantity, 0)
+  const ticketAverage = sales.length
+    ? sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length
+    : 0
 
   function addToCart(variant: Variant) {
+    if (variant.stockActual <= 0) {
+      setMessage('No hay stock disponible para esta variante.')
+      return
+    }
+
     setCart((current) => {
       const existing = current.find((item) => item.variant.idVariante === variant.idVariante)
       if (existing) {
+        if (existing.quantity >= variant.stockActual) {
+          setMessage('No puedes vender mas unidades que el stock disponible.')
+          return current
+        }
         return current.map((item) => item.variant.idVariante === variant.idVariante
           ? { ...item, quantity: item.quantity + 1 }
           : item)
@@ -73,7 +91,10 @@ export function SalesPosPage() {
       setCart((current) => current.filter((item) => item.variant.idVariante !== idVariante))
       return
     }
-    setCart((current) => current.map((item) => item.variant.idVariante === idVariante ? { ...item, quantity } : item))
+    setCart((current) => current.map((item) => {
+      if (item.variant.idVariante !== idVariante) return item
+      return { ...item, quantity: Math.min(quantity, item.variant.stockActual) }
+    }))
   }
 
   async function checkout() {
@@ -89,26 +110,15 @@ export function SalesPosPage() {
     try {
       const created = await salesApi.createSale(payload)
       setSales((current) => [created, ...current])
+      setVariants((current) => current.map((variant) => {
+        const sold = payload.items.find((item) => item.idVariante === variant.idVariante)
+        return sold ? { ...variant, stockActual: variant.stockActual - sold.cantidad } : variant
+      }))
       setMessage(`Venta #${created.idVenta} registrada en backend.`)
+      setCart([])
     } catch {
-      setMessage('Venta guardada localmente porque el backend no respondio.')
-      setSales((current) => [{
-        idVenta: Date.now(),
-        idUsuario: 0,
-        estado: 'COMPLETADA',
-        metodoPago: payment,
-        fecha: new Date().toISOString(),
-        detalles: payload.items.map((item, index) => ({
-          idDetalle: index + 1,
-          idVariante: item.idVariante,
-          cantidad: item.cantidad,
-          precioUnitario: item.precioUnitario,
-          subtotal: item.cantidad * item.precioUnitario,
-        })),
-        total,
-      }, ...current])
+      setMessage('No se pudo registrar la venta en backend. El carrito se mantiene sin cambios.')
     }
-    setCart([])
   }
 
   const categorySales = [
@@ -133,7 +143,7 @@ export function SalesPosPage() {
 
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard label="Ventas registradas" value={String(sales.length)} icon={Receipt} />
-        <KpiCard label="Ticket promedio" value={`S/ ${(sales.reduce((sum, sale) => sum + sale.total, 0) / sales.length).toFixed(2)}`} icon={ShoppingCart} tone="success" />
+        <KpiCard label="Ticket promedio" value={`S/ ${ticketAverage.toFixed(2)}`} icon={ShoppingCart} tone="success" />
         <KpiCard label="Carrito actual" value={`S/ ${total.toFixed(2)}`} icon={Receipt} tone="warning" />
       </section>
 

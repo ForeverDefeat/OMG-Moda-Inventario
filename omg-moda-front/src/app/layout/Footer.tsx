@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Mail, MapPin, Server, Shirt, ShieldCheck } from 'lucide-react'
+import { API_ORIGIN } from '../../infra/api/httpClient'
 
 const footerModules = [
   { label: 'Catalogo', href: '/catalogo' },
@@ -32,7 +33,7 @@ export function Footer() {
           <span className="inline-flex items-center gap-2"><MapPin size={14} /> Lima, Peru</span>
           <span className="inline-flex items-center gap-2"><Mail size={14} /> soporte@omgmoda.pe</span>
           <span className="inline-flex items-center gap-2"><ShieldCheck size={14} /> Acceso protegido con JWT</span>
-          <span className="inline-flex items-center gap-2"><Server size={14} /> API local: localhost:8080</span>
+          <span className="inline-flex items-center gap-2"><Server size={14} /> API: {API_ORIGIN}</span>
         </div>
 
         <div className="grid gap-3">

@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Building2,
   ClipboardCheck,
@@ -12,7 +12,7 @@ import {
 import type { RegisterAdjustmentRequest, RegisterEntryRequest } from '../domain/types'
 import type { Variant } from '../../catalog/domain/types'
 import { inventoryApi } from '../../../infra/api/inventoryApi'
-import { mockVariants } from '../../../infra/mock/mockData'
+import { productsApi } from '../../../infra/api/productsApi'
 import { ActionButton } from '../../../shared/components/ActionButton'
 import { Badge, StockBadge } from '../../../shared/components/Badge'
 import { KpiCard } from '../../../shared/components/KpiCard'
@@ -68,7 +68,7 @@ const defaultWarehouseDraft = {
 }
 
 export function InventoryPage() {
-  const [variants, setVariants] = useState(mockVariants)
+  const [variants, setVariants] = useState<Variant[]>([])
   const [warehouses, setWarehouses] = useState<Warehouse[]>(initialWarehouses)
   const [activeWarehouseId, setActiveWarehouseId] = useState(initialWarehouses[0].id)
   const [warehouseSearch, setWarehouseSearch] = useState('')
@@ -76,7 +76,19 @@ export function InventoryPage() {
   const [entryOpen, setEntryOpen] = useState(false)
   const [adjustOpen, setAdjustOpen] = useState(false)
   const [warehouseOpen, setWarehouseOpen] = useState(false)
-  const [message, setMessage] = useState('Almacen principal listo para operar.')
+  const [message, setMessage] = useState('Cargando inventario desde backend.')
+
+  useEffect(() => {
+    productsApi.listVariants()
+      .then((data) => {
+        setVariants(data)
+        setMessage(data.length ? 'Almacen principal listo para operar.' : 'Backend conectado sin inventario registrado.')
+      })
+      .catch(() => {
+        setVariants([])
+        setMessage('Backend no disponible. No se muestran datos mock.')
+      })
+  }, [])
 
   const activeWarehouse = warehouses.find((warehouse) => warehouse.id === activeWarehouseId) ?? warehouses[0]
   const totalUnits = variants.reduce((total, variant) => total + variant.stockActual, 0)
@@ -109,15 +121,15 @@ export function InventoryPage() {
       motivo: String(form.get('motivo') ?? ''),
     }
     try {
-      await inventoryApi.registerEntry(payload)
+      const movement = await inventoryApi.registerEntry(payload)
+      setVariants((current) => current.map((variant) => variant.idVariante === payload.idVariante
+        ? { ...variant, stockActual: movement.stockResultante }
+        : variant))
       setMessage('Movimiento registrado en backend.')
+      setEntryOpen(false)
     } catch {
-      setMessage('Movimiento aplicado localmente porque el backend no respondio.')
+      setMessage('No se pudo registrar el movimiento en backend. No se aplicaron cambios locales.')
     }
-    setVariants((current) => current.map((variant) => variant.idVariante === payload.idVariante
-      ? { ...variant, stockActual: variant.stockActual + payload.cantidad }
-      : variant))
-    setEntryOpen(false)
   }
 
   async function submitAdjustment(event: FormEvent<HTMLFormElement>) {
@@ -129,15 +141,15 @@ export function InventoryPage() {
       motivo: String(form.get('motivo') ?? ''),
     }
     try {
-      await inventoryApi.registerAdjustment(payload)
+      const movement = await inventoryApi.registerAdjustment(payload)
+      setVariants((current) => current.map((variant) => variant.idVariante === payload.idVariante
+        ? { ...variant, stockActual: movement.stockResultante }
+        : variant))
       setMessage('Ajuste registrado en backend.')
+      setAdjustOpen(false)
     } catch {
-      setMessage('Ajuste aplicado localmente porque el backend no respondio.')
+      setMessage('No se pudo registrar el ajuste en backend. No se aplicaron cambios locales.')
     }
-    setVariants((current) => current.map((variant) => variant.idVariante === payload.idVariante
-      ? { ...variant, stockActual: payload.cantidad }
-      : variant))
-    setAdjustOpen(false)
   }
 
   function submitWarehouse(event: FormEvent<HTMLFormElement>) {

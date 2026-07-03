@@ -6,6 +6,7 @@ import com.omgmoda.sistema_inventario.producto.aplicacion.usecases.BuscarVariant
 import com.omgmoda.sistema_inventario.producto.aplicacion.usecases.RegistrarProductoUseCaseImpl;
 import com.omgmoda.sistema_inventario.producto.dominio.ports.IVarianteRepository;
 import com.omgmoda.sistema_inventario.producto.infraestructura.adapters.JpaVarianteAdapter;
+import com.omgmoda.sistema_inventario.producto.infraestructura.adapters.ProductoJpaRepository;
 import com.omgmoda.sistema_inventario.producto.infraestructura.adapters.VarianteJpaRepository;
 
 import org.springframework.context.annotation.Bean;
@@ -24,8 +25,9 @@ public class ProductoModuleConfig {
      * Adaptador de salida: implementa IVarianteRepository usando Spring Data JPA.
      */
     @Bean
-    public IVarianteRepository varianteRepository(VarianteJpaRepository jpaRepository) {
-        return new JpaVarianteAdapter(jpaRepository);
+    public IVarianteRepository varianteRepository(VarianteJpaRepository varianteJpaRepository,
+                                                  ProductoJpaRepository productoJpaRepository) {
+        return new JpaVarianteAdapter(varianteJpaRepository, productoJpaRepository);
     }
 
     /**

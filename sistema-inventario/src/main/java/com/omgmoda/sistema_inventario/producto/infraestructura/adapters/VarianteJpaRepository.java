@@ -1,11 +1,13 @@
 package com.omgmoda.sistema_inventario.producto.infraestructura.adapters;
 
 import com.omgmoda.sistema_inventario.producto.infraestructura.entities.VarianteJpaEntity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Interfaz Spring Data JPA interna del adaptador.
@@ -14,8 +16,14 @@ import java.util.List;
  */
 public interface VarianteJpaRepository extends JpaRepository<VarianteJpaEntity, Long> {
 
+    @Override
+    @EntityGraph(attributePaths = "producto")
+    Optional<VarianteJpaEntity> findById(Long id);
+
+    @EntityGraph(attributePaths = "producto")
     List<VarianteJpaEntity> findByProductoId(Long idProducto);
 
+    @EntityGraph(attributePaths = "producto")
     @Query("""
             SELECT v FROM VarianteJpaEntity v
             JOIN v.producto p
@@ -29,6 +37,7 @@ public interface VarianteJpaRepository extends JpaRepository<VarianteJpaEntity, 
             @Param("categoria") String categoria
     );
 
+    @EntityGraph(attributePaths = "producto")
     @Query("SELECT v FROM VarianteJpaEntity v WHERE v.stockActual <= v.stockMinimo")
     List<VarianteJpaEntity> findBajoStock();
 }
