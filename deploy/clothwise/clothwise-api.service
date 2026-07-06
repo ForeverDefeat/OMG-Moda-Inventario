@@ -1,0 +1,21 @@
+[Unit]
+Description=ClothWise Spring Boot API
+After=network.target mysql.service
+
+[Service]
+User=clothwise
+Group=www-data
+WorkingDirectory=/opt/clothwise/api
+EnvironmentFile=/etc/clothwise/clothwise-api.env
+ExecStart=/usr/bin/java -jar /opt/clothwise/api/clothwise-api.jar
+Restart=on-failure
+RestartSec=10
+SuccessExitStatus=143
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/www/clothwise/uploads /opt/clothwise/api
+
+[Install]
+WantedBy=multi-user.target

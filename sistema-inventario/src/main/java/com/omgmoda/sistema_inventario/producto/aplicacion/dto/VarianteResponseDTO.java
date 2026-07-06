@@ -12,6 +12,8 @@ public record VarianteResponseDTO(
         Long idVariante,
         @Schema(description = "Identificador del producto.", example = "1")
         Long idProducto,
+        @Schema(description = "SKU unico de la variante.", example = "CW-CAMISA-OXFORD-M-AZUL-01")
+        String sku,
         @Schema(description = "Nombre del producto.", example = "Camisa Oxford")
         String nombreProducto,
         @Schema(description = "Categoria del producto.", example = "Camisas")
@@ -32,9 +34,50 @@ public record VarianteResponseDTO(
         BigDecimal precioVenta,
         @Schema(description = "Stock actual.", example = "15")
         int stockActual,
+        @Schema(description = "Stock reservado en ventas pendientes.", example = "2")
+        int stockReservado,
+        @Schema(description = "Stock disponible para vender.", example = "13")
+        int stockDisponible,
         @Schema(description = "Stock minimo configurado.", example = "5")
         int stockMinimo,
         @Schema(description = "Estado calculado del stock.", example = "NORMAL")
         StockStatus stockStatus
 
-) {}
+) {
+        public VarianteResponseDTO(Long idVariante,
+                                   Long idProducto,
+                                   String sku,
+                                   String nombreProducto,
+                                   String categoria,
+                                   String marca,
+                                   String imageUrl,
+                                   String talla,
+                                   String color,
+                                   String material,
+                                   BigDecimal precioCosto,
+                                   BigDecimal precioVenta,
+                                   int stockActual,
+                                   int stockMinimo,
+                                   StockStatus stockStatus) {
+                this(idVariante, idProducto, sku, nombreProducto, categoria, marca, imageUrl,
+                        talla, color, material, precioCosto, precioVenta, stockActual, 0, stockActual, stockMinimo, stockStatus);
+        }
+
+        public VarianteResponseDTO(Long idVariante,
+                                   Long idProducto,
+                                   String nombreProducto,
+                                   String categoria,
+                                   String marca,
+                                   String imageUrl,
+                                   String talla,
+                                   String color,
+                                   String material,
+                                   BigDecimal precioCosto,
+                                   BigDecimal precioVenta,
+                                   int stockActual,
+                                   int stockMinimo,
+                                   StockStatus stockStatus) {
+                this(idVariante, idProducto, "SKU-" + idVariante, nombreProducto, categoria, marca, imageUrl,
+                        talla, color, material, precioCosto, precioVenta, stockActual, 0, stockActual, stockMinimo, stockStatus);
+        }
+}

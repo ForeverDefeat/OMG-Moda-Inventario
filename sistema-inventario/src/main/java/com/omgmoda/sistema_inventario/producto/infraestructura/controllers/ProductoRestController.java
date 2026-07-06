@@ -99,8 +99,10 @@ public class ProductoRestController {
             @Parameter(description = "Color de la variante. Ejemplo: Negro")
             @RequestParam(required = false) String color,
             @Parameter(description = "Categoria del producto. Ejemplo: Camisas")
-            @RequestParam(required = false) String categoria) {
-        return ResponseEntity.ok(buscarVariantesUseCase.buscar(talla, color, categoria));
+            @RequestParam(required = false) String categoria,
+            @Parameter(description = "SKU de la variante. Ejemplo: CW-CAMISA-OXFORD-M-AZUL-01")
+            @RequestParam(required = false) String sku) {
+        return ResponseEntity.ok(buscarVariantesUseCase.buscar(talla, color, categoria, sku));
     }
 
     /**

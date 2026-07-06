@@ -20,7 +20,7 @@ class VentaTest {
         venta.agregarDetalle(12L, 1, BigDecimal.valueOf(15.50));
         venta.completar();
 
-        assertThat(venta.getEstado()).isEqualTo(EstadoVenta.COMPLETADA);
+        assertThat(venta.getEstado()).isEqualTo(EstadoVenta.COMPLETED);
         assertThat(venta.calcularTotal()).isEqualByComparingTo("75.50");
     }
 
@@ -55,13 +55,13 @@ class VentaTest {
         Venta completada = new Venta(
                 1L,
                 7L,
-                EstadoVenta.COMPLETADA,
+                EstadoVenta.COMPLETED,
                 "EFECTIVO",
                 LocalDateTime.now(),
                 List.of(new DetalleVenta(1L, 11L, 2, BigDecimal.TEN))
         );
         completada.anular();
 
-        assertThat(completada.getEstado()).isEqualTo(EstadoVenta.ANULADA);
+        assertThat(completada.getEstado()).isEqualTo(EstadoVenta.CANCELLED);
     }
 }

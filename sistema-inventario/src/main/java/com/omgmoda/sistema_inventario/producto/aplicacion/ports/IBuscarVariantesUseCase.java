@@ -19,7 +19,11 @@ public interface IBuscarVariantesUseCase {
      * @param categoria filtro por categoría de producto — opcional.
      * @return lista de variantes que cumplen los criterios.
      */
-    List<VarianteResponseDTO> buscar(String talla, String color, String categoria);
+    List<VarianteResponseDTO> buscar(String talla, String color, String categoria, String sku);
+
+    default List<VarianteResponseDTO> buscar(String talla, String color, String categoria) {
+        return buscar(talla, color, categoria, null);
+    }
 
     /**
      * Retorna todas las variantes con stock en o por debajo del mínimo.

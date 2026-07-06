@@ -38,6 +38,126 @@ class ReportesQueryServiceTest {
     }
 
     @Test
+    void calculaVentasPorCategoriaPorPeriodo() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(venta()));
+        when(buscarVariantesUseCase.buscar(null, null, null)).thenReturn(List.of(variante(1L, "Camisas")));
+
+        var result = service.ventasCategoria("7d");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().name()).isEqualTo("Camisas");
+    }
+
+    @Test
+    void rotacionPorPeriodoAgrupaUnidadesVendidas() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(venta()));
+        when(buscarVariantesUseCase.buscar(null, null, null)).thenReturn(List.of(variante(1L, "Camisas")));
+
+        var result = service.rotacionPorPeriodo("Camisas", "today");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().value()).isEqualByComparingTo("2");
+    }
+
+    @Test
+    void resumenCalculaMetricasConcisasDelNegocio() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(venta()));
+        when(buscarVariantesUseCase.buscar(null, null, null)).thenReturn(List.of(variante(1L, "Camisas")));
+        when(buscarVariantesUseCase.buscarBajoStock()).thenReturn(List.of(variante(1L, "Camisas")));
+
+        var result = service.obtenerResumen(
+                LocalDateTime.of(2026, 7, 1, 0, 0),
+                LocalDateTime.of(2026, 7, 31, 23, 59)
+        );
+
+        assertThat(result.ventasMes()).isEqualByComparingTo("179.80");
+        assertThat(result.unidadesVendidas()).isEqualTo(2);
+        assertThat(result.ticketPromedio()).isEqualByComparingTo("179.80");
+        assertThat(result.categoriaPrincipal()).isEqualTo("Camisas");
+        assertThat(result.productoMasVendido()).isEqualTo("Camisa");
+        assertThat(result.skusConAlerta()).isEqualTo(1);
+        assertThat(result.reportesActivos()).isEqualTo(2);
+    }
+
+    @Test
+    void tendenciaPorRangoAgrupaPorMesCuandoElRangoEsAmplio() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(venta()));
+
+        var result = service.ventasTendencia(
+                LocalDateTime.now().minusDays(90),
+                LocalDateTime.now()
+        );
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().value()).isEqualByComparingTo("179.80");
+    }
+
+    @Test
+    void rotacionPorRangoAgrupaUnidadesVendidas() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(venta()));
+        when(buscarVariantesUseCase.buscar(null, null, null)).thenReturn(List.of(variante(1L, "Camisas")));
+
+        var result = service.rotacion(
+                LocalDateTime.of(2026, 7, 1, 0, 0),
+                LocalDateTime.of(2026, 7, 31, 23, 59),
+                "Camisas"
+        );
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().value()).isEqualByComparingTo("2");
+    }
+
+    @Test
+    void ventasCategoriaDetalleIncluyeUnidadesYParticipacion() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(venta()));
+        when(buscarVariantesUseCase.buscar(null, null, null)).thenReturn(List.of(variante(1L, "Camisas")));
+
+        var result = service.ventasCategoriaDetalle(null, null);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().categoria()).isEqualTo("Camisas");
+        assertThat(result.getFirst().ventas()).isEqualByComparingTo("179.80");
+        assertThat(result.getFirst().unidadesVendidas()).isEqualTo(2);
+        assertThat(result.getFirst().participacionPorcentaje()).isEqualByComparingTo("100.00");
+    }
+
+    @Test
+    void productosMasVendidosAgrupaPorProducto() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(venta()));
+        when(buscarVariantesUseCase.buscar(null, null, null)).thenReturn(List.of(variante(1L, "Camisas")));
+
+        var result = service.productosMasVendidos(null, null);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().producto()).isEqualTo("Camisa");
+        assertThat(result.getFirst().categoria()).isEqualTo("Camisas");
+        assertThat(result.getFirst().unidadesVendidas()).isEqualTo(2);
+        assertThat(result.getFirst().ingresos()).isEqualByComparingTo("179.80");
+    }
+
+    @Test
+    void productosBajaRotacionDetectaStockAltoConPocaSalida() {
+        when(consultarVentaUseCase.buscarPorFechas(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of());
+        when(buscarVariantesUseCase.buscar(null, null, null))
+                .thenReturn(List.of(varianteConStock(1L, "Camisas", 12, 5, StockStatus.NORMAL)));
+
+        var result = service.productosBajaRotacion(null, null);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().producto()).isEqualTo("Camisa");
+        assertThat(result.getFirst().unidadesVendidas()).isZero();
+        assertThat(result.getFirst().stockActual()).isEqualTo(12);
+    }
+
+    @Test
     void stockAlertasUsaCasoDeUsoDeVariantes() {
         when(buscarVariantesUseCase.buscarBajoStock()).thenReturn(List.of(variante(1L, "Camisas")));
 
@@ -65,6 +185,10 @@ class ReportesQueryServiceTest {
     }
 
     private VarianteResponseDTO variante(Long id, String categoria) {
+        return varianteConStock(id, categoria, 4, 5, StockStatus.BAJO_STOCK);
+    }
+
+    private VarianteResponseDTO varianteConStock(Long id, String categoria, int stockActual, int stockMinimo, StockStatus status) {
         return new VarianteResponseDTO(
                 id,
                 id,
@@ -77,9 +201,9 @@ class ReportesQueryServiceTest {
                 "Algodon",
                 BigDecimal.valueOf(45),
                 BigDecimal.valueOf(89.90),
-                4,
-                5,
-                StockStatus.BAJO_STOCK
+                stockActual,
+                stockMinimo,
+                status
         );
     }
 }

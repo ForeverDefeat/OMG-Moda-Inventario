@@ -22,7 +22,10 @@ public interface IVarianteRepository {
     List<VarianteProducto> findByProductoId(Long idProducto);
 
     /** Retorna variantes filtrando por talla y/o color (null = sin filtro). */
-    List<VarianteProducto> findByFiltros(String talla, String color, String categoria);
+    List<VarianteProducto> findByFiltros(String talla, String color, String categoria, String sku);
+
+    /** Indica si ya existe una variante con el SKU normalizado. */
+    boolean existsBySku(String sku);
 
     /** Retorna todas las variantes cuyo stock actual <= stock mínimo. */
     List<VarianteProducto> findBajoStock();

@@ -1,10 +1,13 @@
 package com.omgmoda.sistema_inventario.usuario.infraestructura.adapters;
 
 import com.omgmoda.sistema_inventario.shared.dominio.exception.NotFoundException;
+import com.omgmoda.sistema_inventario.usuario.dominio.RolUsuario;
 import com.omgmoda.sistema_inventario.usuario.dominio.Usuario;
 import com.omgmoda.sistema_inventario.usuario.dominio.ports.IUsuarioRepository;
 import com.omgmoda.sistema_inventario.usuario.infraestructura.entities.UsuarioJpaEntity;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -29,6 +32,15 @@ public class JpaUsuarioAdapter implements IUsuarioRepository {
     }
 
     @Override
+    public List<Usuario> findAll() {
+        return jpaRepository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .sorted(Comparator.comparing(Usuario::getNombre, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    @Override
     public Optional<Usuario> findById(Long id) {
         return jpaRepository.findById(id).map(this::toDomain);
     }
@@ -41,6 +53,11 @@ public class JpaUsuarioAdapter implements IUsuarioRepository {
     @Override
     public boolean existsByCorreo(String correo) {
         return jpaRepository.existsByCorreo(correo);
+    }
+
+    @Override
+    public long countByRolAndActivoTrue(RolUsuario rol) {
+        return jpaRepository.countByRolAndActivoTrue(rol);
     }
 
     @Override
@@ -59,6 +76,7 @@ public class JpaUsuarioAdapter implements IUsuarioRepository {
         entity.setCorreo(u.getCorreo());
         entity.setContrasenia(u.getContrasenia());
         entity.setRol(u.getRol());
+        entity.setActivo(u.isActivo());
         return entity;
     }
 
@@ -68,7 +86,8 @@ public class JpaUsuarioAdapter implements IUsuarioRepository {
                 e.getNombre(),
                 e.getCorreo(),
                 e.getContrasenia(),
-                e.getRol()
+                e.getRol(),
+                e.isActivo()
         );
     }
 }

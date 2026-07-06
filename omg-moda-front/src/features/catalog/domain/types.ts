@@ -3,6 +3,7 @@ export type StockStatus = 'NORMAL' | 'LOW' | 'OUT' | 'BAJO_STOCK' | 'SIN_STOCK'
 export interface Variant {
   idVariante: number
   idProducto: number
+  sku: string
   nombreProducto: string
   categoria: string
   marca: string
@@ -12,6 +13,8 @@ export interface Variant {
   precioCosto: number
   precioVenta: number
   stockActual: number
+  stockReservado?: number
+  stockDisponible?: number
   stockMinimo: number
   stockStatus: StockStatus
   imageUrl?: string
@@ -23,6 +26,7 @@ export interface CreateProductRequest {
   marca: string
   imageUrl?: string
   variantes: Array<{
+    sku?: string
     talla: string
     color: string
     material?: string
@@ -35,4 +39,5 @@ export interface VariantFilters {
   talla?: string
   color?: string
   categoria?: string
+  sku?: string
 }

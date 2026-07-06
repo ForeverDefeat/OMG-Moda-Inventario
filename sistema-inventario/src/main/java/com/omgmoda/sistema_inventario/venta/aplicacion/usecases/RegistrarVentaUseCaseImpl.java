@@ -2,6 +2,7 @@ package com.omgmoda.sistema_inventario.venta.aplicacion.usecases;
 
 import com.omgmoda.sistema_inventario.producto.dominio.VarianteProducto;
 import com.omgmoda.sistema_inventario.producto.dominio.ports.IVarianteRepository;
+import com.omgmoda.sistema_inventario.shared.aplicacion.utils.TextNormalizer;
 import com.omgmoda.sistema_inventario.shared.dominio.exception.DomainException;
 import com.omgmoda.sistema_inventario.shared.dominio.exception.NotFoundException;
 import com.omgmoda.sistema_inventario.venta.aplicacion.dto.CrearVentaDTO;
@@ -62,7 +63,7 @@ public class RegistrarVentaUseCaseImpl implements IRegistrarVentaUseCase {
                 .toList();
 
         // 2. Crear el Aggregate Root Venta en estado PENDIENTE
-        Venta venta = new Venta(idUsuario, dto.metodoPago());
+        Venta venta = new Venta(idUsuario, TextNormalizer.normalizeRequired(dto.metodoPago(), "El metodo de pago"));
 
         // 3. Agregar detalles y descontar stock por cada ítem
         for (int i = 0; i < dto.items().size(); i++) {

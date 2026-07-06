@@ -29,7 +29,7 @@ public class DashboardQueryService {
     }
 
     public DashboardResponseDTO obtenerDashboard(String periodo, String canal, String categoria) {
-        List<VarianteResponseDTO> variantes = buscarVariantesUseCase.buscar(null, null, null);
+        List<VarianteResponseDTO> variantes = buscarVariantesUseCase.buscar(null, null, null, null);
         List<CompraSugerenciaDTO> sugerencias = compraSugerenciaService.listarSugerencias();
         boolean canalSinDatos = "online".equalsIgnoreCase(canal == null ? "" : canal);
 

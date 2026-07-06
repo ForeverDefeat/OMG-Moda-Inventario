@@ -57,17 +57,28 @@ public class Producto {
                                           String material,
                                           BigDecimal precioCosto,
                                           BigDecimal precioVenta) {
+        return crearVariante(null, talla, color, material, precioCosto, precioVenta);
+    }
+
+    public VarianteProducto crearVariante(String sku,
+                                          String talla,
+                                          String color,
+                                          String material,
+                                          BigDecimal precioCosto,
+                                          BigDecimal precioVenta) {
         if (talla == null || talla.isBlank())
             throw new DomainException("La talla de la variante no puede estar vacía.");
         if (color == null || color.isBlank())
             throw new DomainException("El color de la variante no puede estar vacío.");
+        if (sku == null || sku.isBlank())
+            throw new DomainException("El SKU de la variante no puede estar vacio.");
         if (precioCosto == null || precioCosto.compareTo(BigDecimal.ZERO) < 0)
             throw new DomainException("El precio de costo no puede ser negativo.");
         if (precioVenta == null || precioVenta.compareTo(BigDecimal.ZERO) <= 0)
             throw new DomainException("El precio de venta debe ser mayor a cero.");
 
         VarianteProducto variante = new VarianteProducto(
-                this, talla, color, material, precioCosto, precioVenta
+                this, sku, talla, color, material, precioCosto, precioVenta
         );
         variantes.add(variante);
         return variante;

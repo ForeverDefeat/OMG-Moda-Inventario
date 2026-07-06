@@ -47,6 +47,23 @@ class VarianteProductoTest {
         assertThat(varianteConStock(6, 5).getStockStatus()).isEqualTo(StockStatus.NORMAL);
     }
 
+    @Test
+    void reservaConsumeYLiberaStockSinSobreReservar() {
+        VarianteProducto variante = varianteConStock(5, 2);
+
+        variante.reservarStock(3);
+        assertThat(variante.getStockActual()).isEqualTo(5);
+        assertThat(variante.getStockReservado()).isEqualTo(3);
+        assertThat(variante.stockDisponible()).isEqualTo(2);
+
+        variante.liberarReserva(1);
+        assertThat(variante.getStockReservado()).isEqualTo(2);
+
+        variante.consumirReserva(2);
+        assertThat(variante.getStockActual()).isEqualTo(3);
+        assertThat(variante.getStockReservado()).isZero();
+    }
+
     private VarianteProducto varianteConStock(int stockActual, int stockMinimo) {
         Producto producto = new Producto(1L, "Camisa Oxford", "Camisas", "OMG MODA");
         return new VarianteProducto(

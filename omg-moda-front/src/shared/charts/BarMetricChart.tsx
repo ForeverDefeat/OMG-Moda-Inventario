@@ -10,6 +10,12 @@ const colors = [
   'var(--color-chart-1)',
 ]
 
+function shouldShowXAxisLabel(index: number, total: number) {
+  if (total <= 6) return true
+  if (index === 0 || index === total - 1) return true
+  return index % Math.ceil(total / 5) === 0
+}
+
 export function BarMetricChart({ data, valueFormatter = (value) => String(value) }: BarMetricChartProps) {
   const width = 640
   const height = 240
@@ -48,18 +54,24 @@ export function BarMetricChart({ data, valueFormatter = (value) => String(value)
         const x = padding + index * (barWidth + gap)
         const y = height - padding - barHeight
         const label = String(item.name)
+        const showValue = data.length <= 4
+        const showLabel = shouldShowXAxisLabel(index, data.length)
 
         return (
           <g key={label}>
             <rect x={x} y={y} width={barWidth} height={barHeight} rx="8" fill={colors[index % colors.length]}>
               <title>{`${label}: ${valueFormatter(value)}`}</title>
             </rect>
-            <text x={x + barWidth / 2} y={Math.max(y - 8, 16)} textAnchor="middle" fill="var(--color-text)" fontSize="12" fontWeight="700">
-              {valueFormatter(value)}
-            </text>
-            <text x={x + barWidth / 2} y={height - 8} textAnchor="middle" fill="var(--color-muted)" fontSize="13">
-              {label}
-            </text>
+            {showValue && (
+              <text x={x + barWidth / 2} y={Math.max(y - 8, 16)} textAnchor="middle" fill="var(--color-text)" fontSize="12" fontWeight="700">
+                {valueFormatter(value)}
+              </text>
+            )}
+            {showLabel && (
+              <text x={x + barWidth / 2} y={height - 8} textAnchor="middle" fill="var(--color-muted)" fontSize="12">
+                {label}
+              </text>
+            )}
           </g>
         )
       })}

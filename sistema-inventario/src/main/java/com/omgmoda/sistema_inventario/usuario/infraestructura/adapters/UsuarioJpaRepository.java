@@ -1,6 +1,7 @@
 package com.omgmoda.sistema_inventario.usuario.infraestructura.adapters;
 
 import com.omgmoda.sistema_inventario.usuario.infraestructura.entities.UsuarioJpaEntity;
+import com.omgmoda.sistema_inventario.usuario.dominio.RolUsuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -15,4 +16,6 @@ public interface UsuarioJpaRepository extends JpaRepository<UsuarioJpaEntity, Lo
     Optional<UsuarioJpaEntity> findByCorreo(String correo);
 
     boolean existsByCorreo(String correo);
+
+    long countByRolAndActivoTrue(RolUsuario rol);
 }

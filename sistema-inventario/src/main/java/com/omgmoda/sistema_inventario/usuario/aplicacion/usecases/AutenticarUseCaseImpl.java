@@ -46,6 +46,10 @@ public class AutenticarUseCaseImpl implements IAutenticarUseCase {
                         "No existe un usuario registrado con el correo: " + dto.correo()
                 ));
 
+        if (!usuario.isActivo()) {
+            throw new DomainException("El usuario se encuentra inactivo. Solicita reactivacion a un administrador.");
+        }
+
         // 2. Verificar contraseña contra el hash almacenado
         if (!passwordEncoder.matches(dto.contrasenia(), usuario.getContrasenia()))
             throw new DomainException("Las credenciales proporcionadas son incorrectas.");

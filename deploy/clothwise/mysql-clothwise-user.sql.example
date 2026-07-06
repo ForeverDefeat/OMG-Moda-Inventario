@@ -1,0 +1,12 @@
+CREATE DATABASE IF NOT EXISTS inventario_omg
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+CREATE USER IF NOT EXISTS 'clothwise_app'@'127.0.0.1'
+  IDENTIFIED BY 'change-this-password';
+
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP
+  ON inventario_omg.*
+  TO 'clothwise_app'@'127.0.0.1';
+
+FLUSH PRIVILEGES;

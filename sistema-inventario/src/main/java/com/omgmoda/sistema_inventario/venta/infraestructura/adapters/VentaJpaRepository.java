@@ -4,7 +4,11 @@ import com.omgmoda.sistema_inventario.venta.dominio.EstadoVenta;
 import com.omgmoda.sistema_inventario.venta.infraestructura.entities.VentaJpaEntity;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +22,11 @@ public interface VentaJpaRepository extends JpaRepository<VentaJpaEntity, Long> 
     @Override
     @EntityGraph(attributePaths = "detalles")
     Optional<VentaJpaEntity> findById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = "detalles")
+    @Query("SELECT v FROM VentaJpaEntity v WHERE v.id = :id")
+    Optional<VentaJpaEntity> findByIdForUpdate(@Param("id") Long id);
 
     @Override
     @EntityGraph(attributePaths = "detalles")

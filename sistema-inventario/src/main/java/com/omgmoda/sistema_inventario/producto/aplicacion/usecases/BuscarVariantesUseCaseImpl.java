@@ -21,9 +21,9 @@ public class BuscarVariantesUseCaseImpl implements IBuscarVariantesUseCase {
     }
 
     @Override
-    public List<VarianteResponseDTO> buscar(String talla, String color, String categoria) {
+    public List<VarianteResponseDTO> buscar(String talla, String color, String categoria, String sku) {
         return varianteRepository
-                .findByFiltros(talla, color, categoria)
+                .findByFiltros(talla, color, categoria, sku)
                 .stream()
                 .map(this::toDTO)
                 .toList();
@@ -44,6 +44,7 @@ public class BuscarVariantesUseCaseImpl implements IBuscarVariantesUseCase {
         return new VarianteResponseDTO(
                 v.getId(),
                 v.getProducto().getId(),
+                v.getSku(),
                 v.getProducto().getNombre(),
                 v.getProducto().getCategoria(),
                 v.getProducto().getMarca(),
@@ -54,6 +55,8 @@ public class BuscarVariantesUseCaseImpl implements IBuscarVariantesUseCase {
                 v.getPrecioCosto(),
                 v.getPrecioVenta(),
                 v.getStockActual(),
+                v.getStockReservado(),
+                v.stockDisponible(),
                 v.getStockMinimo(),
                 v.getStockStatus()
         );

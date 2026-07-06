@@ -6,9 +6,11 @@ import { CatalogPage } from '../../features/catalog/ui/CatalogPage'
 import { CustomersPage } from '../../features/customers/ui/CustomersPage'
 import { DashboardPage } from '../../features/dashboard/ui/DashboardPage'
 import { InventoryPage } from '../../features/inventory/ui/InventoryPage'
+import { PaymentsPage } from '../../features/payments/ui/PaymentsPage'
 import { PurchaseOrdersPage } from '../../features/purchase-orders/ui/PurchaseOrdersPage'
 import { ReportsPage } from '../../features/reports/ui/ReportsPage'
 import { SalesPosPage } from '../../features/sales/ui/SalesPosPage'
+import { UsersPage } from '../../features/users/ui/UsersPage'
 
 export function AppRouter() {
   return (
@@ -21,9 +23,11 @@ export function AppRouter() {
           <Route path="/catalogo" element={<CatalogPage />} />
           <Route path="/stock" element={<InventoryPage />} />
           <Route path="/ventas" element={<SalesPosPage />} />
+          <Route path="/pagos" element={<PaymentsPage />} />
           <Route path="/clientes" element={<CustomersPage />} />
           <Route path="/compras" element={<PurchaseOrdersPage />} />
           <Route path="/reportes" element={<ReportsPage />} />
+          <Route path="/usuarios" element={<UsersPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

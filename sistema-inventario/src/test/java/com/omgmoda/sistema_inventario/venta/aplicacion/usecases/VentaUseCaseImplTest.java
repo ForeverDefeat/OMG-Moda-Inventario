@@ -53,7 +53,7 @@ class VentaUseCaseImplTest {
 
         assertThat(variante.getStockActual()).isEqualTo(5);
         assertThat(respuesta.idVenta()).isEqualTo(77L);
-        assertThat(respuesta.estado()).isEqualTo(EstadoVenta.COMPLETADA);
+        assertThat(respuesta.estado()).isEqualTo(EstadoVenta.COMPLETED);
         assertThat(respuesta.total()).isEqualByComparingTo("60");
         verify(varianteRepository).save(variante);
         verify(ventaRepository).save(any(Venta.class));
@@ -94,7 +94,7 @@ class VentaUseCaseImplTest {
         VentaResponseDTO respuesta = useCase.anular(77L, 5L);
 
         assertThat(variante.getStockActual()).isEqualTo(8);
-        assertThat(respuesta.estado()).isEqualTo(EstadoVenta.ANULADA);
+        assertThat(respuesta.estado()).isEqualTo(EstadoVenta.CANCELLED);
         verify(varianteRepository).save(variante);
         verify(ventaRepository).save(venta);
     }
@@ -103,7 +103,7 @@ class VentaUseCaseImplTest {
         return new Venta(
                 77L,
                 5L,
-                EstadoVenta.COMPLETADA,
+                EstadoVenta.COMPLETED,
                 "EFECTIVO",
                 LocalDateTime.now(),
                 List.of(new DetalleVenta(1L, 10L, 3, BigDecimal.valueOf(20)))

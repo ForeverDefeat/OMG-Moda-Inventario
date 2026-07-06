@@ -9,5 +9,9 @@ public record ReporteResumenDTO(
         BigDecimal ventasMes,
         BigDecimal crecimientoPorcentaje,
         int skusConAlerta,
-        int reportesActivos
+        int reportesActivos,
+        int unidadesVendidas,
+        BigDecimal ticketPromedio,
+        String categoriaPrincipal,
+        String productoMasVendido
 ) {}

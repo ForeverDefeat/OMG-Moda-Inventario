@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.List;
 public record CrearVentaDTO(
 
         @NotBlank(message = "El metodo de pago es obligatorio.")
+        @Size(max = 20, message = "El metodo de pago no puede superar 20 caracteres.")
+        @Pattern(regexp = "EFECTIVO|TARJETA|YAPE|PLIN", message = "El metodo de pago debe ser EFECTIVO, TARJETA, YAPE o PLIN.")
         @Schema(description = "Metodo de pago usado en la venta.", example = "EFECTIVO")
         String metodoPago,
 

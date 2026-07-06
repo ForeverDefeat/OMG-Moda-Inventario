@@ -30,6 +30,9 @@ public class UsuarioJpaEntity {
     @Column(name = "rol", nullable = false, length = 10)
     private RolUsuario rol;
 
+    @Column(name = "activo", nullable = false)
+    private boolean activo = true;
+
     // Constructor vacío requerido por JPA
     public UsuarioJpaEntity() {}
 
@@ -45,4 +48,6 @@ public class UsuarioJpaEntity {
     public void setContrasenia(String c)         { this.contrasenia = c; }
     public RolUsuario getRol()                   { return rol; }
     public void setRol(RolUsuario rol)           { this.rol = rol; }
+    public boolean isActivo()                    { return activo; }
+    public void setActivo(boolean activo)        { this.activo = activo; }
 }

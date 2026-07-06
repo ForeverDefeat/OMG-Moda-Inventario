@@ -1,9 +1,22 @@
 interface LineTrendChartProps {
   data: Array<Record<string, string | number>>
   valueFormatter?: (value: number) => string
+  showPointLabels?: boolean
 }
 
-export function LineTrendChart({ data, valueFormatter = (value) => String(value) }: LineTrendChartProps) {
+function shouldShowXAxisLabel(index: number, total: number) {
+  if (total <= 8) return true
+  if (index === 0 || index === total - 1) return true
+  if (total <= 16) return index % 2 === 0
+  const middle = Math.floor((total - 1) / 2)
+  return index === middle || index % Math.ceil(total / 6) === 0
+}
+
+export function LineTrendChart({
+  data,
+  valueFormatter = (value) => String(value),
+  showPointLabels = false,
+}: LineTrendChartProps) {
   const values = data.map((item) => Number(item.value))
   const max = Math.max(...values, 1)
   const min = Math.min(...values, 0)
@@ -56,18 +69,23 @@ export function LineTrendChart({ data, valueFormatter = (value) => String(value)
       <polyline points={polylinePoints} fill="none" stroke="var(--color-chart-1)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" />
       {points.map((point, index) => {
         const label = String(data[index].name)
+        const showLabel = shouldShowXAxisLabel(index, data.length)
 
         return (
           <g key={label}>
             <circle cx={point.x} cy={point.y} r="5" fill="var(--color-surface)" stroke="var(--color-chart-1)" strokeWidth="3">
               <title>{`${label}: ${valueFormatter(point.value)}`}</title>
             </circle>
-            <text x={point.x} y={Math.max(point.y - 12, 16)} textAnchor="middle" fill="var(--color-text)" fontSize="12" fontWeight="700">
-              {valueFormatter(point.value)}
-            </text>
-            <text x={point.x} y={height - 12} textAnchor="middle" fill="var(--color-muted)" fontSize="13">
-              {label}
-            </text>
+            {showPointLabels && (
+              <text x={point.x} y={Math.max(point.y - 12, 16)} textAnchor="middle" fill="var(--color-text)" fontSize="12" fontWeight="700">
+                {valueFormatter(point.value)}
+              </text>
+            )}
+            {showLabel && (
+              <text x={point.x} y={height - 12} textAnchor="middle" fill="var(--color-muted)" fontSize="12">
+                {label}
+              </text>
+            )}
           </g>
         )
       })}

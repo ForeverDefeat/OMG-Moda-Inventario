@@ -1,19 +1,26 @@
 package com.omgmoda.sistema_inventario.shared.infraestructura.exception;
 
 import com.omgmoda.sistema_inventario.shared.aplicacion.dto.ErrorResponse;
+import com.omgmoda.sistema_inventario.shared.dominio.exception.ConflictException;
 import com.omgmoda.sistema_inventario.shared.dominio.exception.DomainException;
 import com.omgmoda.sistema_inventario.shared.dominio.exception.NotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -32,6 +39,8 @@ import java.util.List;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Regla de negocio violada en el dominio.
@@ -64,6 +73,20 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(
                         HttpStatus.NOT_FOUND.value(),
                         "Not Found",
+                        ex.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(
+            ConflictException ex, HttpServletRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of(
+                        HttpStatus.CONFLICT.value(),
+                        "Conflict",
                         ex.getMessage(),
                         request.getRequestURI()
                 ));
@@ -104,6 +127,37 @@ public class GlobalExceptionHandler {
                         HttpStatus.BAD_REQUEST.value(),
                         "Bad Request",
                         "La imagen no puede superar 5 MB.",
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
+
+        return badRequest("El cuerpo de la solicitud no tiene un formato valido.", request);
+    }
+
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class
+    })
+    public ResponseEntity<ErrorResponse> handleBadRequestException(
+            Exception ex, HttpServletRequest request) {
+
+        return badRequest("La solicitud contiene parametros invalidos.", request);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFoundException(
+            NoResourceFoundException ex, HttpServletRequest request) {
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(
+                        HttpStatus.NOT_FOUND.value(),
+                        "Not Found",
+                        "La ruta solicitada no existe.",
                         request.getRequestURI()
                 ));
     }
@@ -151,12 +205,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
 
+        log.error("Error no controlado en {}: {}", request.getRequestURI(), ex.getClass().getSimpleName());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of(
                         HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "Internal Server Error",
                         "Ocurrió un error inesperado. Contacte al administrador.",
+                        request.getRequestURI()
+                ));
+    }
+
+    private ResponseEntity<ErrorResponse> badRequest(String message, HttpServletRequest request) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Bad Request",
+                        message,
                         request.getRequestURI()
                 ));
     }

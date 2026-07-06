@@ -26,6 +26,10 @@ const titles: Record<string, { title: string; subtitle: string }> = {
     title: 'Ventas y POS',
     subtitle: 'Registra ventas, arma carrito y revisa tendencias.',
   },
+  '/pagos': {
+    title: 'Pagos',
+    subtitle: 'Bandeja de cobros pendientes, confirmaciones y reservas.',
+  },
   '/clientes': {
     title: 'Clientes',
     subtitle: 'Perfiles, segmentos y valor historico del cliente.',
@@ -37,6 +41,10 @@ const titles: Record<string, { title: string; subtitle: string }> = {
   '/reportes': {
     title: 'Reportes',
     subtitle: 'Perspectivas sobre ventas, inventario y rotacion.',
+  },
+  '/usuarios': {
+    title: 'Usuarios',
+    subtitle: 'Administracion de accesos, roles y credenciales.',
   },
 }
 
@@ -55,6 +63,10 @@ export function HeaderBar() {
   const copy = titles[pathname] ?? titles['/dashboard']
   const searchTerm = search.trim()
   const encodedSearch = encodeURIComponent(searchTerm)
+  const visibleNavItems = useMemo(
+    () => navItems.filter((item) => !item.adminOnly || session?.rol === 'ADMIN'),
+    [session?.rol],
+  )
 
   useEffect(() => {
     productsApi.listVariants()
@@ -66,7 +78,7 @@ export function HeaderBar() {
     if (!searchTerm) return []
 
     const normalized = normalizeSearch(searchTerm)
-    const pageMatches = navItems
+    const pageMatches = visibleNavItems
       .filter((item) => normalizeSearch(item.label).includes(normalized))
       .map((item) => ({
         id: `page-${item.href}`,
@@ -77,14 +89,14 @@ export function HeaderBar() {
 
     const productMatches = productSuggestionsSource
       .filter((variant) =>
-        [variant.nombreProducto, variant.categoria, variant.color, variant.talla]
+        [variant.sku, variant.nombreProducto, variant.categoria, variant.color, variant.talla]
           .some((field) => normalizeSearch(field).includes(normalized)),
       )
       .slice(0, 4)
       .map((variant) => ({
         id: `product-${variant.idVariante}`,
         label: variant.nombreProducto,
-        meta: `${variant.categoria} / ${variant.talla} / ${variant.color}`,
+        meta: `${variant.sku} / ${variant.categoria} / ${variant.talla} / ${variant.color}`,
         href: `/catalogo?q=${encodeURIComponent(variant.nombreProducto)}`,
       }))
 
@@ -98,7 +110,7 @@ export function HeaderBar() {
       meta: 'Catalogo de productos',
       href: `/catalogo?q=${encodedSearch}`,
     }]
-  }, [encodedSearch, productSuggestionsSource, searchTerm])
+  }, [encodedSearch, productSuggestionsSource, searchTerm, visibleNavItems])
 
   function goToSearchResult(href: string) {
     navigate(href)
@@ -125,8 +137,8 @@ export function HeaderBar() {
           </div>
         </div>
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 overflow-x-auto lg:flex">
-          {navItems.map(({ href, label }) => (
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 min-[1700px]:flex">
+          {visibleNavItems.map(({ href, label }) => (
             <NavLink
               key={href}
               to={href}
@@ -181,7 +193,7 @@ export function HeaderBar() {
         </form>
 
         <div className="flex items-center gap-2">
-          <IconButton label="Menu" icon={Menu} className="lg:hidden" onClick={() => setMobileOpen(true)} />
+          <IconButton label="Menu" icon={Menu} className="min-[1700px]:hidden" onClick={() => setMobileOpen(true)} />
           <IconButton label="Notificaciones" icon={Bell} />
           <div className="hidden min-w-[150px] text-right sm:block">
             <p className="text-sm font-semibold text-[var(--color-text)]">{session?.nombre ?? 'Usuario'}</p>
@@ -198,7 +210,7 @@ export function HeaderBar() {
 
       <Drawer title="Navegacion" isOpen={mobileOpen} onClose={() => setMobileOpen(false)} side="left">
         <nav className="grid gap-2">
-          {navItems.map(({ href, icon: Icon, label }) => (
+          {visibleNavItems.map(({ href, icon: Icon, label }) => (
             <NavLink
               key={href}
               to={href}

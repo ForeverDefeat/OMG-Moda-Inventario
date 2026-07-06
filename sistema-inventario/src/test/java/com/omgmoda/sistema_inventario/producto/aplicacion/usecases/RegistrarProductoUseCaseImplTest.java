@@ -50,4 +50,35 @@ class RegistrarProductoUseCaseImplTest {
         assertThat(respuesta.get(0).stockActual()).isZero();
         verify(varianteRepository).save(any(VarianteProducto.class));
     }
+
+    @Test
+    void normalizaEspaciosAntesDeCrearDominio() {
+        when(varianteRepository.save(any(VarianteProducto.class))).thenAnswer(invocation -> {
+            VarianteProducto variante = invocation.getArgument(0);
+            variante.setId(101L);
+            return variante;
+        });
+        CrearProductoDTO dto = new CrearProductoDTO(
+                "  Camisa   Oxford  ",
+                "  Camisas  ",
+                "  OMG   MODA  ",
+                "  ",
+                List.of(new CrearProductoDTO.VarianteDTO(
+                        "  M  ",
+                        "  Azul   Marino  ",
+                        "  Algodon   Pima  ",
+                        BigDecimal.valueOf(45),
+                        BigDecimal.valueOf(89.90)
+                ))
+        );
+
+        List<VarianteResponseDTO> respuesta = useCase.registrar(dto);
+
+        assertThat(respuesta.get(0).nombreProducto()).isEqualTo("Camisa Oxford");
+        assertThat(respuesta.get(0).categoria()).isEqualTo("Camisas");
+        assertThat(respuesta.get(0).marca()).isEqualTo("OMG MODA");
+        assertThat(respuesta.get(0).talla()).isEqualTo("M");
+        assertThat(respuesta.get(0).color()).isEqualTo("Azul Marino");
+        assertThat(respuesta.get(0).material()).isEqualTo("Algodon Pima");
+    }
 }

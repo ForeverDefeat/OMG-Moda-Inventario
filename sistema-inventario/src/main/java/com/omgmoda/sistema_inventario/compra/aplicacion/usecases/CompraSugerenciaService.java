@@ -1,5 +1,7 @@
 package com.omgmoda.sistema_inventario.compra.aplicacion.usecases;
 
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableList;
 import com.omgmoda.sistema_inventario.compra.aplicacion.dto.CompraSugerenciaDTO;
 import com.omgmoda.sistema_inventario.producto.aplicacion.dto.VarianteResponseDTO;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IBuscarVariantesUseCase;
@@ -7,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -23,13 +24,12 @@ public class CompraSugerenciaService {
     }
 
     public List<CompraSugerenciaDTO> listarSugerencias() {
-        return buscarVariantesUseCase.buscarBajoStock()
+        List<CompraSugerenciaDTO> sugerencias = buscarVariantesUseCase.buscarBajoStock()
                 .stream()
                 .map(this::toSuggestion)
-                .sorted(Comparator
-                        .comparingInt((CompraSugerenciaDTO item) -> prioridadOrden(item.prioridad()))
-                        .thenComparing(CompraSugerenciaDTO::producto))
+                .sorted(this::compararSugerencias)
                 .toList();
+        return ImmutableList.copyOf(sugerencias);
     }
 
     private CompraSugerenciaDTO toSuggestion(VarianteResponseDTO variante) {
@@ -64,5 +64,12 @@ public class CompraSugerenciaService {
             case "Media" -> 1;
             default -> 2;
         };
+    }
+
+    private int compararSugerencias(CompraSugerenciaDTO left, CompraSugerenciaDTO right) {
+        return ComparisonChain.start()
+                .compare(prioridadOrden(left.prioridad()), prioridadOrden(right.prioridad()))
+                .compare(left.producto(), right.producto())
+                .result();
     }
 }

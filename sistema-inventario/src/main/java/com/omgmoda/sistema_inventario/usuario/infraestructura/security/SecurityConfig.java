@@ -93,7 +93,11 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
 
                     // Ventas
+                    .requestMatchers(HttpMethod.POST, "/api/v1/pagos/webhooks/stub")
+                        .permitAll()
                     .requestMatchers("/api/v1/ventas/**")
+                        .hasAnyRole("ADMIN", "VENDEDOR")
+                    .requestMatchers("/api/v1/pagos/**")
                         .hasAnyRole("ADMIN", "VENDEDOR")
 
                     .requestMatchers("/api/v1/dashboard/**")
@@ -101,6 +105,10 @@ public class SecurityConfig {
 
                     // Reportes
                     .requestMatchers("/api/v1/reportes/**")
+                        .hasRole("ADMIN")
+
+                    // Usuarios
+                    .requestMatchers("/api/v1/usuarios/**")
                         .hasRole("ADMIN")
 
                     // Cualquier otra ruta requiere autenticación
@@ -134,7 +142,7 @@ public class SecurityConfig {
                 .filter(origin -> !origin.isBlank())
                 .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key", "X-OMG-STUB-SECRET"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

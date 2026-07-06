@@ -28,6 +28,7 @@ export function ProductPriceCard({ variant, onAdd, compact = false }: { variant:
       <div className={cn('flex flex-1 flex-col gap-3 p-4', compact && 'gap-2 p-3')}>
         <div>
           <h3 className="line-clamp-1 font-bold leading-tight text-[var(--color-text)]">{variant.nombreProducto}</h3>
+          <p className="line-clamp-1 text-xs font-semibold text-[var(--color-muted)]">{variant.sku}</p>
           <p className="line-clamp-1 text-sm text-[var(--color-muted)]">{variant.categoria} / {variant.talla} / {variant.color}</p>
         </div>
         <div className="mt-auto flex items-center justify-between gap-3">

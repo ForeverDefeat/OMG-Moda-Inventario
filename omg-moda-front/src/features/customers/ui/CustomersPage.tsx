@@ -9,11 +9,11 @@ import { StatusBadge } from '../../../shared/components/Badge'
 import { Modal } from '../../../shared/components/Modal'
 
 const columns: Column<Customer>[] = [
-  { key: 'cliente', header: 'Cliente', render: (row) => <span className="font-semibold">{row.nombre}</span> },
-  { key: 'correo', header: 'Correo', render: (row) => row.correo },
-  { key: 'telefono', header: 'Telefono', render: (row) => row.telefono },
-  { key: 'segmento', header: 'Segmento', render: (row) => <StatusBadge status={row.segmento} /> },
-  { key: 'valor', header: 'Valor', render: (row) => `S/ ${row.totalCompras.toFixed(2)}` },
+  { key: 'cliente', header: 'Cliente', render: (row) => <span className="font-semibold">{row.nombre}</span>, sortable: true, sortValue: (row) => row.nombre },
+  { key: 'correo', header: 'Correo', render: (row) => row.correo, sortable: true, sortValue: (row) => row.correo },
+  { key: 'telefono', header: 'Telefono', render: (row) => row.telefono, sortable: true, sortValue: (row) => row.telefono },
+  { key: 'segmento', header: 'Segmento', render: (row) => <StatusBadge status={row.segmento} />, sortable: true, sortValue: (row) => row.segmento },
+  { key: 'valor', header: 'Valor', render: (row) => `S/ ${row.totalCompras.toFixed(2)}`, sortable: true, sortValue: (row) => row.totalCompras, sortType: 'number' },
 ]
 
 export function CustomersPage() {
@@ -83,7 +83,7 @@ export function CustomersPage() {
           <p className="text-sm text-[var(--color-muted)]">Informacion cargada desde la API de clientes.</p>
         </div>
       </section>
-      <DataTable rows={customers} columns={columns} emptyText="Sin clientes registrados" />
+      <DataTable rows={customers} columns={columns} emptyText="Sin clientes registrados" maxHeight="480px" />
 
       <Modal open={modalOpen} title="Nuevo cliente" onClose={() => setModalOpen(false)}>
         <form className="grid gap-4" onSubmit={submitCustomer}>

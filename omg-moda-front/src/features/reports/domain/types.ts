@@ -9,9 +9,14 @@ export interface ReportSummary {
   crecimientoPorcentaje: number
   skusConAlerta: number
   reportesActivos: number
+  unidadesVendidas: number
+  ticketPromedio: number
+  categoriaPrincipal: string
+  productoMasVendido: string
 }
 
 export interface ReportFilters {
   desde?: string
   hasta?: string
+  periodo?: 'today' | '7d' | '30d' | '120d'
 }

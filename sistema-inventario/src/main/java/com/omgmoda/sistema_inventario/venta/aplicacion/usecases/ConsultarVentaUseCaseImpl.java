@@ -67,6 +67,7 @@ public class ConsultarVentaUseCaseImpl implements IConsultarVentaUseCase {
     public List<VentaResponseDTO> buscarPorFechas(LocalDateTime desde, LocalDateTime hasta) {
         return ventaRepository.findByFechaEntre(desde, hasta)
                 .stream()
+                .filter(venta -> venta.getEstado().normalizado() == EstadoVenta.COMPLETED)
                 .map(RegistrarVentaUseCaseImpl::toDTO)
                 .toList();
     }
@@ -75,6 +76,7 @@ public class ConsultarVentaUseCaseImpl implements IConsultarVentaUseCase {
     public List<VentaResponseDTO> buscarPorUsuarioYFechas(Long idUsuario, LocalDateTime desde, LocalDateTime hasta) {
         return ventaRepository.findByUsuarioIdAndFechaEntre(idUsuario, desde, hasta)
                 .stream()
+                .filter(venta -> venta.getEstado().normalizado() == EstadoVenta.COMPLETED)
                 .map(RegistrarVentaUseCaseImpl::toDTO)
                 .toList();
     }

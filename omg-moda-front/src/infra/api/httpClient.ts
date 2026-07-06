@@ -79,3 +79,44 @@ export async function apiRequest<T>(
 
   return parseResponse<T>(response)
 }
+
+export async function downloadRequest(
+  path: string,
+  options: RequestInit = {},
+): Promise<{ blob: Blob; filename: string }> {
+  const session = readStoredSession()
+  const headers = new Headers(options.headers)
+
+  if (session?.token) {
+    headers.set('Authorization', `Bearer ${session.token}`)
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    let message = `Error HTTP ${response.status}`
+    try {
+      message = JSON.parse(text)?.message ?? message
+    } catch {
+      if (text) message = text
+    }
+    throw new ApiError(message, response.status)
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: filenameFromDisposition(response.headers.get('Content-Disposition')),
+  }
+}
+
+function filenameFromDisposition(disposition: string | null) {
+  if (!disposition) return 'reporte'
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+  if (utfMatch?.[1]) return decodeURIComponent(utfMatch[1])
+  const match = disposition.match(/filename="?([^";]+)"?/i)
+  return match?.[1] ?? 'reporte'
+}

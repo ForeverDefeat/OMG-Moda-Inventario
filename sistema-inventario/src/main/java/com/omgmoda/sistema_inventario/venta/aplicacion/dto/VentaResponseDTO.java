@@ -23,9 +23,21 @@ public record VentaResponseDTO(
         @Schema(description = "Detalles de la venta.")
         List<DetalleVentaResponseDTO> detalles,
         @Schema(description = "Total calculado de la venta.", example = "179.80")
-        BigDecimal total
+        BigDecimal total,
+        PaymentIntentResponseDTO payment,
+        List<PaymentAuditResponseDTO> trazabilidad
 
 ) {
+    public VentaResponseDTO(Long idVenta,
+                            Long idUsuario,
+                            EstadoVenta estado,
+                            String metodoPago,
+                            LocalDateTime fecha,
+                            List<DetalleVentaResponseDTO> detalles,
+                            BigDecimal total) {
+        this(idVenta, idUsuario, estado, metodoPago, fecha, detalles, total, null, List.of());
+    }
+
     @Schema(description = "Detalle de una venta.")
     public record DetalleVentaResponseDTO(
             @Schema(description = "Identificador del detalle.", example = "1")

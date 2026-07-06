@@ -9,9 +9,10 @@ interface DrawerProps {
   onClose: () => void
   children: ReactNode
   side?: 'left' | 'right'
+  size?: 'md' | 'lg'
 }
 
-export function Drawer({ title, isOpen, onClose, children, side = 'right' }: DrawerProps) {
+export function Drawer({ title, isOpen, onClose, children, side = 'right', size = 'md' }: DrawerProps) {
   if (!isOpen) return null
 
   return (
@@ -24,7 +25,8 @@ export function Drawer({ title, isOpen, onClose, children, side = 'right' }: Dra
       />
       <aside
         className={cn(
-          'absolute top-0 h-full w-[min(420px,92vw)] overflow-y-auto bg-[var(--color-surface)] p-5 shadow-[var(--shadow-float)]',
+          'absolute top-0 h-full overflow-y-auto bg-[var(--color-surface)] p-5 shadow-[var(--shadow-float)]',
+          size === 'lg' ? 'w-[min(560px,94vw)]' : 'w-[min(420px,92vw)]',
           side === 'right' ? 'right-0' : 'left-0',
         )}
       >

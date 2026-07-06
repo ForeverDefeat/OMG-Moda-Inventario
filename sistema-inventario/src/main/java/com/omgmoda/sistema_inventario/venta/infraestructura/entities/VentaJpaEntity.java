@@ -14,7 +14,9 @@ import java.util.List;
  * al persistir la venta se persisten automáticamente sus detalles.
  */
 @Entity
-@Table(name = "VENTA")
+@Table(name = "VENTA", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_venta_idempotency_key", columnNames = "idempotency_key")
+})
 public class VentaJpaEntity {
 
     @Id
@@ -26,7 +28,7 @@ public class VentaJpaEntity {
     private Long idUsuario;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "estado", nullable = false, length = 12)
+    @Column(name = "estado", nullable = false, length = 24)
     private EstadoVenta estado;
 
     @Column(name = "metodo_pago", nullable = false, length = 20)
@@ -34,6 +36,21 @@ public class VentaJpaEntity {
 
     @Column(name = "fecha", nullable = false)
     private LocalDateTime fecha;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
+
+    @Column(name = "idempotency_key", length = 120)
+    private String idempotencyKey;
+
+    @Column(name = "idempotency_payload_hash", length = 128)
+    private String idempotencyPayloadHash;
 
     @OneToMany(mappedBy = "venta",
                cascade = CascadeType.ALL,
@@ -56,6 +73,16 @@ public class VentaJpaEntity {
     public void setMetodoPago(String metodoPago)         { this.metodoPago = metodoPago; }
     public LocalDateTime getFecha()                      { return fecha; }
     public void setFecha(LocalDateTime fecha)            { this.fecha = fecha; }
+    public LocalDateTime getCompletedAt()                { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+    public LocalDateTime getCancelledAt()                { return cancelledAt; }
+    public void setCancelledAt(LocalDateTime cancelledAt) { this.cancelledAt = cancelledAt; }
+    public LocalDateTime getExpiredAt()                  { return expiredAt; }
+    public void setExpiredAt(LocalDateTime expiredAt)    { this.expiredAt = expiredAt; }
+    public String getIdempotencyKey()                    { return idempotencyKey; }
+    public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
+    public String getIdempotencyPayloadHash()            { return idempotencyPayloadHash; }
+    public void setIdempotencyPayloadHash(String idempotencyPayloadHash) { this.idempotencyPayloadHash = idempotencyPayloadHash; }
     public List<DetalleVentaJpaEntity> getDetalles()     { return detalles; }
     public void setDetalles(List<DetalleVentaJpaEntity> d) { this.detalles = d; }
 }

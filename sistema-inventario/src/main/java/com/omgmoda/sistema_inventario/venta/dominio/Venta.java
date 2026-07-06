@@ -32,7 +32,7 @@ public class Venta {
         validar(idUsuario, metodoPago);
         this.idUsuario = idUsuario;
         this.metodoPago = metodoPago;
-        this.estado = EstadoVenta.PENDIENTE;
+        this.estado = EstadoVenta.PENDING_PAYMENT;
         this.fecha = LocalDateTime.now();
     }
 
@@ -65,7 +65,7 @@ public class Venta {
     public DetalleVenta agregarDetalle(Long idVariante,
                                        int cantidad,
                                        BigDecimal precioUnitario) {
-        if (!EstadoVenta.PENDIENTE.equals(this.estado))
+        if (!EstadoVenta.PENDING_PAYMENT.equals(this.estado.normalizado()))
             throw new DomainException(
                     "No se pueden agregar detalles a una venta en estado: " + this.estado
             );
@@ -89,7 +89,7 @@ public class Venta {
             throw new DomainException(
                     "No se puede completar una venta sin detalles."
             );
-        this.estado = EstadoVenta.COMPLETADA;
+        this.estado = EstadoVenta.COMPLETED;
     }
 
     /**
@@ -101,7 +101,13 @@ public class Venta {
             throw new DomainException(
                     "No se puede anular una venta en estado: " + this.estado
             );
-        this.estado = EstadoVenta.ANULADA;
+        this.estado = EstadoVenta.CANCELLED;
+    }
+
+    public void expirar() {
+        if (!EstadoVenta.PENDING_PAYMENT.equals(this.estado.normalizado()))
+            throw new DomainException("No se puede expirar una venta en estado: " + this.estado);
+        this.estado = EstadoVenta.EXPIRED;
     }
 
     /**

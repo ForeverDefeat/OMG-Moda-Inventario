@@ -3,10 +3,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Image as ImageIcon, Link as LinkIcon, PackagePlus, Plus, SlidersHorizontal, Trash2, Upload } from 'lucide-react'
 import type { CreateProductRequest, Variant } from '../domain/types'
+import { groupVariantsByProduct, productGroupMatchesSearch, type ProductGroup } from '../domain/productGroups'
 import { productsApi } from '../../../infra/api/productsApi'
 import { ActionButton } from '../../../shared/components/ActionButton'
 import { Modal } from '../../../shared/components/Modal'
-import { ProductPriceCard } from '../../../shared/components/ProductPriceCard'
+import { ProductVariantCard } from '../../../shared/components/ProductVariantCard'
 import { SearchInput } from '../../../shared/components/SearchInput'
 import { cn } from '../../../shared/utils/cn'
 
@@ -15,7 +16,7 @@ const emptyProduct: CreateProductRequest = {
   categoria: '',
   marca: 'OMG MODA',
   imageUrl: '',
-  variantes: [{ talla: 'M', color: '', material: '', precioCosto: 0, precioVenta: 0 }],
+  variantes: [{ sku: '', talla: 'M', color: '', material: '', precioCosto: 0, precioVenta: 0 }],
 }
 
 const stockFilters = ['Todos', 'En stock', 'Bajo stock', 'Sin stock'] as const
@@ -25,11 +26,22 @@ type ImageMode = 'url' | 'upload'
 
 const maxImageSizeBytes = 5 * 1024 * 1024
 const allowedImageExtensions = ['jpg', 'jpeg', 'png', 'webp']
+const customOptionValue = '__custom__'
+const baseSizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const baseBrandOptions = ['OMG MODA']
+const rowsPerCatalogPage = 5
 
-function matchesStockFilter(variant: Variant, filter: StockFilter) {
-  if (filter === 'Sin stock') return variant.stockActual <= 0
-  if (filter === 'Bajo stock') return variant.stockActual > 0 && variant.stockActual <= variant.stockMinimo
-  if (filter === 'En stock') return variant.stockActual > variant.stockMinimo
+function uniqueOptions(values: Array<string | null | undefined>, fallback: string[] = []) {
+  return Array.from(new Set([...fallback, ...values]
+    .map((value) => value?.trim() ?? '')
+    .filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b, 'es'))
+}
+
+function groupMatchesStockFilter(group: ProductGroup, filter: StockFilter) {
+  if (filter === 'Sin stock') return group.allOutOfStock
+  if (filter === 'Bajo stock') return group.hasLowStock
+  if (filter === 'En stock') return group.hasNormalStock
   return true
 }
 
@@ -77,6 +89,58 @@ function imageFileError(file: File) {
   return ''
 }
 
+function CreatableSelectField({ label, value, options, placeholder, newLabel, onChange, required = false }: {
+  label: string
+  value: string
+  options: string[]
+  placeholder: string
+  newLabel: string
+  onChange: (value: string) => void
+  required?: boolean
+}) {
+  const [customMode, setCustomMode] = useState(false)
+  const trimmedValue = value.trim()
+  const valueInOptions = options.includes(trimmedValue)
+  const selectValue = customMode || (trimmedValue && !valueInOptions) ? customOptionValue : trimmedValue
+
+  return (
+    <label className="grid gap-1.5 text-sm font-semibold text-[var(--color-text)]">
+      {label}
+      <select
+        value={selectValue}
+        onChange={(event) => {
+          const nextValue = event.target.value
+          if (nextValue === customOptionValue) {
+            setCustomMode(true)
+            onChange('')
+            return
+          }
+          setCustomMode(false)
+          onChange(nextValue)
+        }}
+        className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal"
+        required={required && !customMode}
+      >
+        <option value="" disabled>{placeholder}</option>
+        {options.map((option) => (
+          <option key={option} value={option}>{option}</option>
+        ))}
+        <option value={customOptionValue}>{newLabel}</option>
+      </select>
+      {selectValue === customOptionValue && (
+        <input
+          className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal"
+          placeholder={placeholder}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          required={required}
+          autoFocus
+        />
+      )}
+    </label>
+  )
+}
+
 export function CatalogPage() {
   const [searchParams] = useSearchParams()
   const urlQuery = searchParams.get('q') ?? ''
@@ -107,15 +171,12 @@ export function CatalogPage() {
       })
   }, [])
 
-  const filtered = useMemo(() => {
-    const value = query.toLowerCase()
-    return variants.filter((variant) =>
-      [variant.nombreProducto, variant.categoria, variant.color, variant.talla]
-        .some((field) => field.toLowerCase().includes(value))
-      && (activeCategory === 'Todas' || variant.categoria === activeCategory)
-      && matchesStockFilter(variant, stockFilter),
-    )
-  }, [activeCategory, stockFilter, variants, query])
+  const productGroups = useMemo(() => groupVariantsByProduct(variants), [variants])
+  const filtered = useMemo(() => productGroups.filter((group) =>
+    productGroupMatchesSearch(group, query)
+    && (activeCategory === 'Todas' || group.categoria === activeCategory)
+    && groupMatchesStockFilter(group, stockFilter),
+  ), [activeCategory, productGroups, query, stockFilter])
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault()
@@ -133,9 +194,15 @@ export function CatalogPage() {
 
     const payload: CreateProductRequest = {
       ...draft,
+      nombre: draft.nombre.trim(),
+      categoria: draft.categoria.trim(),
+      marca: draft.marca.trim(),
       imageUrl: imageUrl || undefined,
       variantes: draft.variantes.map((variant) => ({
         ...variant,
+        sku: variant.sku?.trim() || undefined,
+        talla: variant.talla.trim(),
+        color: variant.color.trim(),
         material: variant.material?.trim() || undefined,
       })),
     }
@@ -150,15 +217,19 @@ export function CatalogPage() {
     }
   }
 
-  const lowStock = variants.filter((variant) => variant.stockActual <= variant.stockMinimo).length
-  const categories = Array.from(new Set(variants.map((variant) => variant.categoria)))
-  const pageSize = gridColumns === 5 ? 10 : 6
+  const lowStock = productGroups.filter((group) => group.hasLowStock || group.allOutOfStock).length
+  const categories = uniqueOptions(variants.map((variant) => variant.categoria))
+  const brandOptions = uniqueOptions(variants.map((variant) => variant.marca), baseBrandOptions)
+  const sizeOptions = uniqueOptions(variants.map((variant) => variant.talla), baseSizeOptions)
+  const colorOptions = uniqueOptions(variants.map((variant) => variant.color))
+  const pageSize = rowsPerCatalogPage * gridColumns
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, totalPages)
   const startIndex = (currentPage - 1) * pageSize
   const paginated = filtered.slice(startIndex, startIndex + pageSize)
   const resultStart = filtered.length ? startIndex + 1 : 0
   const resultEnd = Math.min(startIndex + pageSize, filtered.length)
+  const visibleVariantCount = filtered.reduce((total, group) => total + group.variants.length, 0)
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
 
   function updateQuery(value: string) {
@@ -201,7 +272,7 @@ export function CatalogPage() {
       ...current,
       variantes: [
         ...current.variantes,
-        { talla: 'M', color: '', material: '', precioCosto: 0, precioVenta: 0 },
+        { sku: '', talla: 'M', color: '', material: '', precioCosto: 0, precioVenta: 0 },
       ],
     }))
   }
@@ -316,8 +387,9 @@ export function CatalogPage() {
           </div>
           <div className="border-t border-[var(--color-border)] pt-4">
             <p className="text-sm font-bold">Resumen</p>
-            <p className="mt-2 text-sm text-[var(--color-muted)]">{filtered.length} variantes visibles</p>
-            <p className="text-sm text-[var(--color-muted)]">{lowStock} con stock bajo</p>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">{filtered.length} productos visibles</p>
+            <p className="text-sm text-[var(--color-muted)]">{visibleVariantCount} variantes disponibles</p>
+            <p className="text-sm text-[var(--color-muted)]">{lowStock} productos con alerta</p>
             {(activeCategory !== 'Todas' || stockFilter !== 'Todos' || query) && (
               <button
                 type="button"
@@ -387,8 +459,8 @@ export function CatalogPage() {
               ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
               : 'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
           )}>
-            {paginated.map((variant) => (
-              <ProductPriceCard key={variant.idVariante} variant={variant} compact={gridColumns === 5} />
+            {paginated.map((group) => (
+              <ProductVariantCard key={group.idProducto} group={group} compact={gridColumns === 5} />
             ))}
           </section>
 
@@ -454,14 +526,24 @@ export function CatalogPage() {
               Nombre
               <input className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal" placeholder="Camisa Oxford" value={draft.nombre} onChange={(e) => setDraft({ ...draft, nombre: e.target.value })} required />
             </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-[var(--color-text)]">
-              Categoria
-              <input className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal" placeholder="Camisas" value={draft.categoria} onChange={(e) => setDraft({ ...draft, categoria: e.target.value })} required />
-            </label>
-            <label className="grid gap-1.5 text-sm font-semibold text-[var(--color-text)]">
-              Marca
-              <input className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal" placeholder="OMG MODA" value={draft.marca} onChange={(e) => setDraft({ ...draft, marca: e.target.value })} required />
-            </label>
+            <CreatableSelectField
+              label="Categoria"
+              value={draft.categoria}
+              options={categories}
+              placeholder="Selecciona categoria"
+              newLabel="Nueva categoria..."
+              onChange={(categoria) => setDraft({ ...draft, categoria })}
+              required
+            />
+            <CreatableSelectField
+              label="Marca"
+              value={draft.marca}
+              options={brandOptions}
+              placeholder="Selecciona marca"
+              newLabel="Nueva marca..."
+              onChange={(marca) => setDraft({ ...draft, marca })}
+              required
+            />
           </section>
 
           <section className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4 lg:grid-cols-[240px_1fr]">
@@ -546,10 +628,39 @@ export function CatalogPage() {
             <div className="grid gap-3">
               {draft.variantes.map((variant, index) => (
                 <article key={index} className="grid min-w-0 gap-3 rounded-xl border border-[var(--color-border)] p-3">
-                  <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[0.7fr_1fr_1fr_0.8fr_0.8fr_auto]">
-                    <input className="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2" placeholder="Talla" value={variant.talla} onChange={(e) => updateVariant(index, { talla: e.target.value })} required />
-                    <input className="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2" placeholder="Color" value={variant.color} onChange={(e) => updateVariant(index, { color: e.target.value })} required />
-                    <input className="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2" placeholder="Material" value={variant.material ?? ''} onChange={(e) => updateVariant(index, { material: e.target.value })} />
+                  <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[1fr_0.8fr_1fr_1fr_0.8fr_0.8fr_auto]">
+                    <label className="grid gap-1.5 text-sm font-semibold text-[var(--color-text)]">
+                      SKU
+                      <input
+                        className="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal uppercase"
+                        placeholder="Auto"
+                        value={variant.sku ?? ''}
+                        onChange={(e) => updateVariant(index, { sku: e.target.value })}
+                      />
+                      <span className="text-xs font-normal text-[var(--color-muted)]">Opcional; si se deja vacio se genera.</span>
+                    </label>
+                    <CreatableSelectField
+                      label="Talla"
+                      value={variant.talla}
+                      options={sizeOptions}
+                      placeholder="Selecciona talla"
+                      newLabel="Nueva talla..."
+                      onChange={(talla) => updateVariant(index, { talla })}
+                      required
+                    />
+                    <CreatableSelectField
+                      label="Color"
+                      value={variant.color}
+                      options={colorOptions}
+                      placeholder="Selecciona color"
+                      newLabel="Nuevo color..."
+                      onChange={(color) => updateVariant(index, { color })}
+                      required
+                    />
+                    <label className="grid gap-1.5 text-sm font-semibold text-[var(--color-text)]">
+                      Material
+                      <input className="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal" placeholder="Material" value={variant.material ?? ''} onChange={(e) => updateVariant(index, { material: e.target.value })} />
+                    </label>
                     <input className="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2" placeholder="Costo" type="number" min="0.01" step="0.01" value={variant.precioCosto || ''} onChange={(e) => updateVariant(index, { precioCosto: Number(e.target.value) })} required />
                     <input className="min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2" placeholder="Venta" type="number" min="0.01" step="0.01" value={variant.precioVenta || ''} onChange={(e) => updateVariant(index, { precioVenta: Number(e.target.value) })} required />
                     <button

@@ -49,11 +49,16 @@ public class JpaVarianteAdapter implements IVarianteRepository {
     }
 
     @Override
-    public List<VarianteProducto> findByFiltros(String talla, String color, String categoria) {
-        return jpaRepository.findByFiltros(talla, color, categoria)
+    public List<VarianteProducto> findByFiltros(String talla, String color, String categoria, String sku) {
+        return jpaRepository.findByFiltros(talla, color, categoria, sku)
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public boolean existsBySku(String sku) {
+        return jpaRepository.existsBySku(sku);
     }
 
     @Override
@@ -80,12 +85,14 @@ public class JpaVarianteAdapter implements IVarianteRepository {
         ProductoJpaEntity productoEntity = obtenerProductoPersistido(v.getProducto());
 
         entity.setProducto(productoEntity);
+        entity.setSku(v.getSku());
         entity.setTalla(v.getTalla());
         entity.setColor(v.getColor());
         entity.setMaterial(v.getMaterial());
         entity.setPrecioCosto(v.getPrecioCosto());
         entity.setPrecioVenta(v.getPrecioVenta());
         entity.setStockActual(v.getStockActual());
+        entity.setStockReservado(v.getStockReservado());
         entity.setStockMinimo(v.getStockMinimo());
         return entity;
     }
@@ -122,12 +129,14 @@ public class JpaVarianteAdapter implements IVarianteRepository {
         return new VarianteProducto(
                 e.getId(),
                 producto,
+                e.getSku(),
                 e.getTalla(),
                 e.getColor(),
                 e.getMaterial(),
                 e.getPrecioCosto(),
                 e.getPrecioVenta(),
                 e.getStockActual(),
+                e.getStockReservado(),
                 e.getStockMinimo()
         );
     }

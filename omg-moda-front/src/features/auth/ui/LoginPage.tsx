@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, EyeOff, Lock, Mail, Shirt } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Shirt } from 'lucide-react'
 import { useAuth } from '../application/useAuth'
 
 const heroImage = 'https://storage.googleapis.com/banani-generated-images/generated-images/97e3d0ab-7b3f-40ed-911d-2536b670d001.jpg'
@@ -12,6 +12,7 @@ export function LoginPage() {
   const location = useLocation()
   const [correo, setCorreo] = useState('admin@omgmoda.com')
   const [contrasenia, setContrasenia] = useState('admin123')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -105,11 +106,19 @@ export function LoginPage() {
                   <input
                     value={contrasenia}
                     onChange={(event) => setContrasenia(event.target.value)}
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     className="w-full bg-transparent text-[var(--color-text)] outline-none placeholder:text-[var(--color-muted)]"
                     placeholder="••••••••"
                   />
-                  <EyeOff size={16} className="ml-3 text-[var(--color-muted)]" />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? 'Ocultar contrasenia' : 'Mostrar contrasenia'}
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="ml-3 grid size-8 shrink-0 place-items-center rounded-lg text-[var(--color-muted)] transition hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </span>
               </label>
 
