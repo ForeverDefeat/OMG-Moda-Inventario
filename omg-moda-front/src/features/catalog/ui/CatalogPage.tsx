@@ -6,9 +6,11 @@ import type { CreateProductRequest, Variant } from '../domain/types'
 import { groupVariantsByProduct, productGroupMatchesSearch, type ProductGroup } from '../domain/productGroups'
 import { productsApi } from '../../../infra/api/productsApi'
 import { ActionButton } from '../../../shared/components/ActionButton'
+import { StockBadge } from '../../../shared/components/Badge'
 import { Modal } from '../../../shared/components/Modal'
 import { ProductVariantCard } from '../../../shared/components/ProductVariantCard'
 import { SearchInput } from '../../../shared/components/SearchInput'
+import { getVariantImage } from '../../../shared/utils/productImages'
 import { cn } from '../../../shared/utils/cn'
 
 const emptyProduct: CreateProductRequest = {
@@ -89,6 +91,39 @@ function imageFileError(file: File) {
   return ''
 }
 
+function availableStock(variant: Pick<Variant, 'stockActual' | 'stockReservado' | 'stockDisponible'>) {
+  return variant.stockDisponible ?? Math.max(variant.stockActual - (variant.stockReservado ?? 0), 0)
+}
+
+function formatPrice(value: number) {
+  return `S/ ${value.toFixed(2)}`
+}
+
+function normalizeColorName(value: string) {
+  return value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
+function colorSwatch(value: string) {
+  const color = normalizeColorName(value)
+  if (color.includes('multicolor') || color.includes('floral')) return 'conic-gradient(#111 0 20%, #1f9d55 0 40%, #d97706 0 60%, #e11d48 0 80%, #2563eb 0)'
+  if (color.includes('blanco negro')) return 'linear-gradient(135deg, #fafafa 0 48%, #111 50% 100%)'
+  if (color.includes('blanco') || color.includes('marfil') || color.includes('hueso') || color.includes('crema')) return '#f7f3e8'
+  if (color.includes('negro')) return '#111111'
+  if (color.includes('azul marino') || color.includes('azul oscuro') || color.includes('indigo')) return '#1d3557'
+  if (color.includes('azul') || color.includes('celeste')) return '#4f9edb'
+  if (color.includes('verde oliva')) return '#6f7f44'
+  if (color.includes('verde') || color.includes('menta') || color.includes('esmeralda')) return '#2f9b67'
+  if (color.includes('rosa')) return '#e9a6b3'
+  if (color.includes('rojo') || color.includes('vino') || color.includes('borgona')) return '#9f1d35'
+  if (color.includes('terracota')) return '#b85f42'
+  if (color.includes('camel') || color.includes('arena') || color.includes('beige') || color.includes('caqui')) return '#c2a46d'
+  if (color.includes('mostaza') || color.includes('champagne')) return '#d3a328'
+  if (color.includes('lavanda')) return '#a78bfa'
+  if (color.includes('chocolate')) return '#5a3825'
+  if (color.includes('gris') || color.includes('grafito')) return '#777777'
+  return '#b8b8b8'
+}
+
 function CreatableSelectField({ label, value, options, placeholder, newLabel, onChange, required = false }: {
   label: string
   value: string
@@ -141,6 +176,161 @@ function CreatableSelectField({ label, value, options, placeholder, newLabel, on
   )
 }
 
+function ProductQuickViewModal({ group, currentIndex, total, onClose, onPrevious, onNext }: {
+  group: ProductGroup
+  currentIndex: number
+  total: number
+  onClose: () => void
+  onPrevious: () => void
+  onNext: () => void
+}) {
+  const initialVariant = group.variants[0]
+  const [selectedVariantId, setSelectedVariantId] = useState(initialVariant.idVariante)
+  const selectedVariant = group.variants.find((variant) => variant.idVariante === selectedVariantId) ?? initialVariant
+  const colors = Array.from(new Set(group.variants.map((variant) => variant.color)))
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }))
+  const sizes = Array.from(new Set(group.variants.map((variant) => variant.talla)))
+    .sort((a, b) => a.localeCompare(b, 'es', { numeric: true, sensitivity: 'base' }))
+  const selectedColor = selectedVariant.color
+  const stock = availableStock(selectedVariant)
+  const priceLabel = group.precioMin === group.precioMax
+    ? formatPrice(group.precioMin)
+    : `${formatPrice(group.precioMin)} - ${formatPrice(group.precioMax)}`
+  const hasProductImage = Boolean(selectedVariant.imageUrl || group.imageUrl)
+  const imageSrc = hasProductImage ? getVariantImage(selectedVariant) : ''
+
+  function selectColor(color: string) {
+    const nextVariant = group.variants.find((variant) => variant.color === color && variant.talla === selectedVariant.talla)
+      ?? group.variants.find((variant) => variant.color === color)
+    if (nextVariant) setSelectedVariantId(nextVariant.idVariante)
+  }
+
+  return (
+    <Modal
+      open
+      title=""
+      onClose={onClose}
+      size="lg"
+    >
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_340px]">
+        <section className="relative overflow-hidden rounded-2xl bg-[#f7f7f7]">
+          <div className="grid h-[320px] place-items-center p-4 sm:h-[420px] lg:h-[min(64vh,620px)]">
+            {imageSrc ? (
+              <img
+                src={imageSrc}
+                alt={group.nombreProducto}
+                className="block h-full w-full object-contain"
+              />
+            ) : (
+              <div className="grid h-full w-full place-items-center rounded-xl border border-dashed border-[var(--color-border)] text-[var(--color-muted)]">
+                <div className="text-center">
+                  <ImageIcon size={42} className="mx-auto" />
+                  <p className="mt-2 text-sm font-semibold">Imagen no disponible</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={onPrevious}
+            className="absolute left-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white text-[var(--color-text)] shadow-[var(--shadow-card)] transition hover:scale-105 hover:shadow-[var(--shadow-float)]"
+            aria-label="Producto anterior"
+          >
+            <ChevronLeft size={22} />
+          </button>
+          <button
+            type="button"
+            onClick={onNext}
+            className="absolute right-3 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white text-[var(--color-text)] shadow-[var(--shadow-card)] transition hover:scale-105 hover:shadow-[var(--shadow-float)]"
+            aria-label="Producto siguiente"
+          >
+            <ChevronRight size={22} />
+          </button>
+          <div className="absolute bottom-3 right-3 rounded-full bg-white/95 px-3 py-1 text-sm font-bold text-[var(--color-text)] shadow-[var(--shadow-card)]">
+            {currentIndex + 1} / {total}
+          </div>
+        </section>
+
+        <aside className="flex min-w-0 flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <div className="grid gap-3">
+            <div className="min-w-0">
+              <h3 className="text-xl font-black leading-tight text-[var(--color-text)]">{group.nombreProducto}</h3>
+              <p className="mt-1 text-sm font-semibold text-[var(--color-muted)]">{group.categoria} / {group.marca}</p>
+            </div>
+            <div className="w-fit rounded-xl bg-[var(--color-bg)] px-3 py-2 text-sm font-bold text-[var(--color-text)]">
+              {selectedVariant.sku}
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3">
+            <InfoBlock label="Precios" value={priceLabel} />
+            <div className="rounded-xl bg-[var(--color-bg)] p-3">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">Color seleccionado</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span
+                  className="block size-6 rounded-full border border-black/10"
+                  style={{ background: colorSwatch(selectedColor) }}
+                />
+                <strong className="text-sm text-[var(--color-text)]">{selectedColor}</strong>
+              </div>
+            </div>
+            <div className="rounded-xl bg-[var(--color-bg)] p-3">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">Colores disponibles</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {colors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => selectColor(color)}
+                    className={cn(
+                      'grid size-8 place-items-center rounded-full border transition',
+                      color === selectedColor ? 'border-[var(--color-text)] ring-2 ring-black/15' : 'border-[var(--color-border)] hover:border-[var(--color-text)]',
+                    )}
+                    aria-label={`Ver color ${color}`}
+                    title={color}
+                  >
+                    <span className="block size-5 rounded-full border border-black/10" style={{ background: colorSwatch(color) }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl bg-[var(--color-bg)] p-3">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">Tallas disponibles</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {sizes.map((size) => (
+                  <span key={size} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-bold text-[var(--color-text)]">
+                    {size}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl bg-[var(--color-bg)] p-3">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">Stock</p>
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <StockBadge stock={stock} min={selectedVariant.stockMinimo} />
+                <span className="text-sm font-semibold text-[var(--color-muted)]">
+                  {stock} disponible / {selectedVariant.stockActual} fisico
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </aside>
+      </div>
+    </Modal>
+  )
+}
+
+function InfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-[var(--color-bg)] p-3">
+      <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">{label}</p>
+      <p className="mt-2 text-base font-black text-[var(--color-text)]">{value}</p>
+    </div>
+  )
+}
+
 export function CatalogPage() {
   const [searchParams] = useSearchParams()
   const urlQuery = searchParams.get('q') ?? ''
@@ -157,6 +347,7 @@ export function CatalogPage() {
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState('')
   const [imageError, setImageError] = useState('')
+  const [quickViewIndex, setQuickViewIndex] = useState<number | null>(null)
   const query = queryState.source === urlQuery ? queryState.value : urlQuery
 
   useEffect(() => {
@@ -231,6 +422,7 @@ export function CatalogPage() {
   const resultEnd = Math.min(startIndex + pageSize, filtered.length)
   const visibleVariantCount = filtered.reduce((total, group) => total + group.variants.length, 0)
   const pageNumbers = buildPageNumbers(currentPage, totalPages)
+  const quickViewProduct = quickViewIndex === null ? null : filtered[quickViewIndex] ?? null
 
   function updateQuery(value: string) {
     setQueryState({ source: urlQuery, value })
@@ -319,13 +511,32 @@ export function CatalogPage() {
     setImagePreviewUrl(URL.createObjectURL(file))
   }
 
+  function openQuickView(group: ProductGroup) {
+    const index = filtered.findIndex((item) => item.idProducto === group.idProducto)
+    if (index >= 0) setQuickViewIndex(index)
+  }
+
+  function closeQuickView() {
+    setQuickViewIndex(null)
+  }
+
+  function showPreviousProduct() {
+    setQuickViewIndex((current) => {
+      if (current === null || !filtered.length) return current
+      return current === 0 ? filtered.length - 1 : current - 1
+    })
+  }
+
+  function showNextProduct() {
+    setQuickViewIndex((current) => {
+      if (current === null || !filtered.length) return current
+      return current === filtered.length - 1 ? 0 : current + 1
+    })
+  }
+
   return (
     <div className="page-grid">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="panel-title">Catalogo de Productos</h1>
-          <p className="text-sm text-[var(--color-muted)]">Gestiona productos, variantes, precios e imagenes de referencia.</p>
-        </div>
+      <section className="flex justify-end">
         <ActionButton type="button" onClick={openCreateModal}>
           <PackagePlus size={17} />
           Anadir producto
@@ -460,7 +671,7 @@ export function CatalogPage() {
               : 'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
           )}>
             {paginated.map((group) => (
-              <ProductVariantCard key={group.idProducto} group={group} compact={gridColumns === 5} />
+              <ProductVariantCard key={group.idProducto} group={group} compact={gridColumns === 5} onView={openQuickView} />
             ))}
           </section>
 
@@ -689,6 +900,18 @@ export function CatalogPage() {
           </div>
         </form>
       </Modal>
+
+      {quickViewProduct && (
+        <ProductQuickViewModal
+          key={quickViewProduct.idProducto}
+          group={quickViewProduct}
+          currentIndex={quickViewIndex ?? 0}
+          total={filtered.length}
+          onClose={closeQuickView}
+          onPrevious={showPreviousProduct}
+          onNext={showNextProduct}
+        />
+      )}
     </div>
   )
 }

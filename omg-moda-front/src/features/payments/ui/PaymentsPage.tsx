@@ -239,20 +239,14 @@ export function PaymentsPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="panel-title">Pagos pendientes</h1>
-          <p className="text-sm text-[var(--color-muted)]">
-            {isAdmin ? 'Bandeja central para revisar cobros, validar comprobantes y liberar reservas.' : 'Consulta tus cobros pendientes antes de entregar productos.'}
-          </p>
-        </div>
+      <section className="flex justify-end">
         <ActionButton variant="secondary" onClick={() => loadPayments(filters)} disabled={loading}>
           <RefreshCcw size={16} /> Actualizar
         </ActionButton>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <KpiCard label="Pagos pendientes" value={String(pendingCount)} icon={Clock3} tone="warning" helper="No entregues productos sin confirmacion" />
+        <KpiCard label="Pendientes" value={String(pendingCount)} icon={Clock3} tone="warning" helper="No entregues productos sin confirmacion" />
         <KpiCard label="Monto pendiente" value={formatMoney(totalPending)} icon={Banknote} tone="primary" />
         <KpiCard label="Expirados en vista" value={String(expiredCount)} icon={ShieldCheck} tone={expiredCount ? 'danger' : 'success'} />
       </section>

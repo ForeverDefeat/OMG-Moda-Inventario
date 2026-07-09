@@ -51,10 +51,12 @@ function formatPrice(value: number) {
 export function ProductVariantCard({
   group,
   onAdd,
+  onView,
   compact = false,
 }: {
   group: ProductGroup
   onAdd?: (variant: Variant) => void
+  onView?: (group: ProductGroup) => void
   compact?: boolean
 }) {
   const initialVariant = useMemo(() => selectInitialVariant(group), [group])
@@ -83,8 +85,28 @@ export function ProductVariantCard({
     if (nextVariant) setSelectedVariantId(nextVariant.idVariante)
   }
 
+  function openView() {
+    if (onView) onView(group)
+  }
+
   return (
-    <article className={cn('group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] transition-colors hover:border-black/50', compact ? 'shadow-sm' : 'dashboard-card')}>
+    <article
+      className={cn(
+        'group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] transition-colors hover:border-black/50',
+        onView && 'cursor-pointer focus-within:border-black/50',
+        compact ? 'shadow-sm' : 'dashboard-card',
+      )}
+      onClick={openView}
+      onKeyDown={(event) => {
+        if (!onView) return
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          openView()
+        }
+      }}
+      role={onView ? 'button' : undefined}
+      tabIndex={onView ? 0 : undefined}
+    >
       <div className={cn('relative shrink-0 overflow-hidden bg-[var(--color-bg)]', compact ? 'h-40 sm:h-44' : 'h-52 sm:h-56')}>
         <img
           src={getVariantImage(selectedVariant)}
@@ -129,7 +151,10 @@ export function ProductVariantCard({
                   title={`${color}${colorHasStock ? '' : ' sin stock'}`}
                   aria-label={`Color ${color}`}
                   aria-pressed={selected}
-                  onClick={() => selectColor(color)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    selectColor(color)
+                  }}
                   className={cn(
                     'grid size-7 place-items-center rounded-full border transition',
                     selected ? 'border-[var(--color-text)] ring-2 ring-black/15' : 'border-[var(--color-border)] hover:border-[var(--color-text)]',
@@ -157,7 +182,10 @@ export function ProductVariantCard({
                   type="button"
                   title={`${talla}${hasStock ? '' : ' sin stock'}`}
                   aria-pressed={selected}
-                  onClick={() => selectSize(talla)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    selectSize(talla)
+                  }}
                   className={cn(
                     'min-h-8 min-w-10 rounded-lg border px-2 text-xs font-bold transition',
                     selected
@@ -181,7 +209,10 @@ export function ProductVariantCard({
         </div>
 
         {onAdd && (
-          <ActionButton className="w-full" onClick={() => onAdd(selectedVariant)} disabled={availableStock(selectedVariant) <= 0}>
+          <ActionButton className="w-full" onClick={(event) => {
+            event.stopPropagation()
+            onAdd(selectedVariant)
+          }} disabled={availableStock(selectedVariant) <= 0}>
             <ShoppingCart size={17} />
             Agregar
           </ActionButton>

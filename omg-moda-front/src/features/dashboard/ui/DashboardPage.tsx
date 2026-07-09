@@ -108,18 +108,15 @@ export function DashboardPage() {
   const [salesChannel, setSalesChannel] = useState<SalesChannel>('all')
   const [rotationCategory, setRotationCategory] = useState('Todas')
   const [dashboard, setDashboard] = useState<DashboardResponse>(emptyDashboard)
-  const [status, setStatus] = useState('Cargando panel desde backend.')
 
   useEffect(() => {
     const categoria = rotationCategory === 'Todas' ? undefined : rotationCategory
     dashboardApi.getDashboard({ periodo: period, canal: salesChannel, categoria })
       .then((data) => {
         setDashboard(data)
-        setStatus('Panel conectado al backend.')
       })
       .catch(() => {
         setDashboard(emptyDashboard)
-        setStatus('Backend no disponible. No se muestran datos mock.')
       })
   }, [period, rotationCategory, salesChannel])
 
@@ -151,11 +148,7 @@ export function DashboardPage() {
 
   return (
     <div className="page-grid">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="panel-title">Panel de Control</h1>
-          <p className="text-sm text-[var(--color-muted)]">{status}</p>
-        </div>
+      <section className="flex justify-end">
         <div className="flex gap-2" role="group" aria-label="Periodo del panel">
           {periodOptions.map((option) => (
             <button

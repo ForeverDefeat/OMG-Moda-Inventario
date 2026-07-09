@@ -3,14 +3,18 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   Building2,
   ClipboardCheck,
+  Image as ImageIcon,
+  Link as LinkIcon,
   MapPin,
   PackageCheck,
+  Pencil,
   Plus,
   SlidersHorizontal,
   Truck,
+  Upload,
 } from 'lucide-react'
 import type { RegisterAdjustmentRequest, RegisterEntryRequest } from '../domain/types'
-import type { Variant } from '../../catalog/domain/types'
+import type { UpdateProductRequest, Variant } from '../../catalog/domain/types'
 import { groupVariantsByProduct, type ProductGroup } from '../../catalog/domain/productGroups'
 import { inventoryApi } from '../../../infra/api/inventoryApi'
 import { productsApi } from '../../../infra/api/productsApi'
@@ -41,6 +45,7 @@ interface StockLine {
 
 type InventorySortKey = 'producto' | 'ubicacion' | 'aMano' | 'disponible' | 'entrante'
 type SortDirection = 'asc' | 'desc'
+type ImageMode = 'url' | 'upload'
 
 interface InventorySortColumn {
   key: InventorySortKey
@@ -90,6 +95,8 @@ const movementReasons = [
   'Correccion por merma',
   'Devolucion',
 ] as const
+const maxImageSizeBytes = 5 * 1024 * 1024
+const allowedImageExtensions = ['jpg', 'jpeg', 'png', 'webp']
 
 const inventorySortColumns: InventorySortColumn[] = [
   { key: 'producto', label: 'Producto', type: 'text' },
@@ -129,6 +136,29 @@ function buildInventoryGroups(variants: Variant[]): InventoryProductGroup[] {
   })
 }
 
+function isValidImageUrl(value: string) {
+  if (!value) return true
+  if (value.startsWith('/uploads/')) return true
+
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function imageFileError(file: File) {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (!allowedImageExtensions.includes(extension)) {
+    return 'Formato no permitido. Usa JPG, PNG o WEBP.'
+  }
+  if (file.size > maxImageSizeBytes) {
+    return 'La imagen no puede superar 5 MB.'
+  }
+  return ''
+}
+
 export function InventoryPage() {
   const [variants, setVariants] = useState<Variant[]>([])
   const [warehouses, setWarehouses] = useState<Warehouse[]>(initialWarehouses)
@@ -139,7 +169,9 @@ export function InventoryPage() {
   const [adjustOpen, setAdjustOpen] = useState(false)
   const [selectedEntryVariantId, setSelectedEntryVariantId] = useState<number | null>(null)
   const [selectedAdjustVariantId, setSelectedAdjustVariantId] = useState<number | null>(null)
+  const [selectedProduct, setSelectedProduct] = useState<InventoryProductGroup | null>(null)
   const [warehouseOpen, setWarehouseOpen] = useState(false)
+  const [productEditOpen, setProductEditOpen] = useState(false)
   const [message, setMessage] = useState('Cargando inventario desde backend.')
 
   useEffect(() => {
@@ -251,13 +283,31 @@ export function InventoryPage() {
     setAdjustOpen(true)
   }
 
+  function openProductEditModal(group: InventoryProductGroup) {
+    setSelectedProduct(group)
+    setProductEditOpen(true)
+  }
+
+  async function submitProductUpdate(payload: UpdateProductRequest, imageFile: File | null) {
+    if (!selectedProduct) return
+
+    try {
+      const updatedVariants = await productsApi.updateProduct(selectedProduct.idProducto, payload, imageFile)
+      setVariants((current) => [
+        ...current.filter((variant) => variant.idProducto !== selectedProduct.idProducto),
+        ...updatedVariants,
+      ].sort((a, b) => a.idVariante - b.idVariante))
+      setMessage('Producto actualizado en backend.')
+      setProductEditOpen(false)
+      setSelectedProduct(null)
+    } catch {
+      setMessage('No se pudo actualizar el producto en backend. No se aplicaron cambios locales.')
+    }
+  }
+
   return (
     <div className="page-grid">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="panel-title">Gestion de Stock</h1>
-          <p className="text-sm text-[var(--color-muted)]">Monitoree un almacen principal y prepare nuevas ubicaciones cuando las necesite.</p>
-        </div>
+      <section className="flex justify-end">
         <div className="flex flex-wrap gap-2">
           <ActionButton variant="secondary" onClick={() => openEntryModal()}><Truck size={17} /> Transferir Stock</ActionButton>
           <ActionButton onClick={() => openAdjustmentModal()}><SlidersHorizontal size={17} /> Ajustar Stock</ActionButton>
@@ -351,7 +401,7 @@ export function InventoryPage() {
             </div>
           </div>
 
-          <InventoryList groups={visibleInventoryGroups} onEntry={openEntryModal} onAdjust={openAdjustmentModal} />
+          <InventoryList groups={visibleInventoryGroups} onEntry={openEntryModal} onAdjust={openAdjustmentModal} onEditProduct={openProductEditModal} />
         </section>
       </section>
 
@@ -366,6 +416,18 @@ export function InventoryPage() {
         }} onSubmit={submitAdjustment} />
       )}
       <WarehouseModal open={warehouseOpen} onClose={() => setWarehouseOpen(false)} onSubmit={submitWarehouse} />
+      {selectedProduct && (
+        <ProductEditModal
+          key={selectedProduct.idProducto}
+          open={productEditOpen}
+          group={selectedProduct}
+          onClose={() => {
+            setProductEditOpen(false)
+            setSelectedProduct(null)
+          }}
+          onSubmit={submitProductUpdate}
+        />
+      )}
     </div>
   )
 }
@@ -379,10 +441,11 @@ function Metric({ label, value, muted = false }: { label: string; value: string;
   )
 }
 
-function InventoryList({ groups, onEntry, onAdjust }: {
+function InventoryList({ groups, onEntry, onAdjust, onEditProduct }: {
   groups: InventoryProductGroup[]
   onEntry: (idVariante: number) => void
   onAdjust: (idVariante: number) => void
+  onEditProduct: (group: InventoryProductGroup) => void
 }) {
   const [sortKey, setSortKey] = useState<InventorySortKey>('producto')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
@@ -461,6 +524,14 @@ function InventoryList({ groups, onEntry, onAdjust }: {
                       <div className="flex flex-wrap items-center gap-2">
                         <h4 className="truncate text-base font-black">{group.nombreProducto}</h4>
                         <StockBadge stock={group.stockTotal} min={group.stockMinimoGrupo} />
+                        <button
+                          type="button"
+                          onClick={() => onEditProduct(group)}
+                          className="inline-flex min-h-8 items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-bold text-[var(--color-text)] transition hover:border-[var(--color-text)]"
+                        >
+                          <Pencil size={13} />
+                          Editar
+                        </button>
                       </div>
                       <p className="mt-1 text-sm font-semibold text-[var(--color-muted)]">{group.categoria} / {group.marca}</p>
                       <p className="mt-1 text-xs text-[var(--color-muted)]">{group.variants.length} variantes / ubicacion base {group.locationLabel}</p>
@@ -536,6 +607,179 @@ function InventoryList({ groups, onEntry, onAdjust }: {
         <StockBadge stock={sortedGroups.filter((group) => group.hasNormalStock).length} min={1} />
       </div>
     </div>
+  )
+}
+
+function ProductEditModal({ open, group, onClose, onSubmit }: {
+  open: boolean
+  group: InventoryProductGroup
+  onClose: () => void
+  onSubmit: (payload: UpdateProductRequest, imageFile: File | null) => Promise<void>
+}) {
+  const [name, setName] = useState(group.nombreProducto)
+  const [imageMode, setImageMode] = useState<ImageMode>('url')
+  const [imageUrl, setImageUrl] = useState(group.imageUrl ?? '')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => () => {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+  }, [imagePreviewUrl])
+
+  function clearUploadedImage() {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+    setImageFile(null)
+    setImagePreviewUrl('')
+  }
+
+  function handleImageModeChange(mode: ImageMode) {
+    setImageMode(mode)
+    setError('')
+    if (mode === 'url') clearUploadedImage()
+  }
+
+  function handleImageFileChange(file: File | null) {
+    setError('')
+    clearUploadedImage()
+    if (!file) return
+
+    const nextError = imageFileError(file)
+    if (nextError) {
+      setError(nextError)
+      return
+    }
+
+    setImageFile(file)
+    setImagePreviewUrl(URL.createObjectURL(file))
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const trimmedName = name.trim()
+    const trimmedImageUrl = imageMode === 'url' ? imageUrl.trim() : (group.imageUrl ?? '')
+
+    if (!trimmedName) {
+      setError('El nombre del producto es obligatorio.')
+      return
+    }
+
+    if (imageMode === 'url' && !isValidImageUrl(trimmedImageUrl)) {
+      setError('Ingresa una URL http(s) valida o deja la imagen vacia.')
+      return
+    }
+
+    if (imageMode === 'upload' && !imageFile) {
+      setError('Selecciona una imagen JPG, PNG o WEBP.')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await onSubmit({ nombre: trimmedName, imageUrl: trimmedImageUrl || undefined }, imageMode === 'upload' ? imageFile : null)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const previewVariant = { categoria: group.categoria, imageUrl: imageMode === 'upload' ? imagePreviewUrl : imageUrl }
+  const previewSrc = imageMode === 'upload' && imagePreviewUrl ? imagePreviewUrl : getVariantImage(previewVariant)
+
+  return (
+    <Modal open={open} title="Editar producto" onClose={onClose} size="lg">
+      <form onSubmit={handleSubmit} className="grid gap-5">
+        <section className="grid gap-4 lg:grid-cols-[240px_1fr]">
+          <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]">
+            {previewSrc ? (
+              <img src={previewSrc} alt="Vista previa del producto" className="h-52 w-full object-cover" />
+            ) : (
+              <div className="grid h-52 place-items-center text-[var(--color-muted)]">
+                <ImageIcon size={34} />
+              </div>
+            )}
+          </div>
+          <div className="grid content-start gap-4">
+            <label className="grid gap-1.5 text-sm font-semibold text-[var(--color-text)]">
+              Nombre del producto
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                maxLength={100}
+                required
+                className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal"
+              />
+            </label>
+
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Modo de imagen">
+              <button
+                type="button"
+                onClick={() => handleImageModeChange('url')}
+                className={cn(
+                  'inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-md)] px-3 text-sm font-semibold transition',
+                  imageMode === 'url'
+                    ? 'bg-[var(--color-primary)] text-white'
+                    : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:text-[var(--color-text)]',
+                )}
+              >
+                <LinkIcon size={16} />
+                URL
+              </button>
+              <button
+                type="button"
+                onClick={() => handleImageModeChange('upload')}
+                className={cn(
+                  'inline-flex min-h-10 items-center gap-2 rounded-[var(--radius-md)] px-3 text-sm font-semibold transition',
+                  imageMode === 'upload'
+                    ? 'bg-[var(--color-primary)] text-white'
+                    : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] hover:text-[var(--color-text)]',
+                )}
+              >
+                <Upload size={16} />
+                Subir imagen
+              </button>
+            </div>
+
+            {imageMode === 'url' ? (
+              <label className="grid gap-1.5 text-sm font-semibold text-[var(--color-text)]">
+                URL de imagen
+                <input
+                  value={imageUrl}
+                  onChange={(event) => {
+                    setError('')
+                    setImageUrl(event.target.value)
+                  }}
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 py-2 font-normal"
+                  placeholder="https://..."
+                />
+              </label>
+            ) : (
+              <label className="grid min-h-28 cursor-pointer place-items-center rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)] p-4 text-center text-sm font-semibold text-[var(--color-text)] transition hover:bg-white">
+                <Upload size={20} className="mb-2 text-[var(--color-muted)]" />
+                {imageFile ? imageFile.name : 'Seleccionar archivo'}
+                <span className="mt-1 block text-xs font-normal text-[var(--color-muted)]">JPG, PNG o WEBP hasta 5 MB</span>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={(event) => handleImageFileChange(event.target.files?.[0] ?? null)}
+                />
+              </label>
+            )}
+          </div>
+        </section>
+
+        {error && <p className="rounded-lg bg-[var(--color-danger-soft)] px-3 py-2 text-sm font-semibold text-[var(--color-danger)]">{error}</p>}
+
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--color-border)] pt-4 sm:flex-row sm:justify-end">
+          <ActionButton type="button" variant="secondary" onClick={onClose}>Cancelar</ActionButton>
+          <ActionButton type="submit" disabled={saving}>
+            <Pencil size={17} />
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </ActionButton>
+        </div>
+      </form>
+    </Modal>
   )
 }
 

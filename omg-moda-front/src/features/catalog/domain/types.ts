@@ -35,6 +35,11 @@ export interface CreateProductRequest {
   }>
 }
 
+export interface UpdateProductRequest {
+  nombre: string
+  imageUrl?: string
+}
+
 export interface VariantFilters {
   talla?: string
   color?: string

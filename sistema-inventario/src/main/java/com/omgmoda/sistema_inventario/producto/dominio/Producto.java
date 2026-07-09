@@ -97,6 +97,12 @@ public class Producto {
 
     // ── Getters (sin setters: inmutabilidad controlada) ────────────────────────
 
+    public void actualizarDatosVisuales(String nombre, String imageUrl) {
+        validar(nombre, categoria, marca);
+        this.nombre = nombre.trim();
+        this.imageUrl = normalizarImageUrl(imageUrl);
+    }
+
     private String normalizarImageUrl(String value) {
         if (value == null || value.isBlank()) return null;
         return value.trim();

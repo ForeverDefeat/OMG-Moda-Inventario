@@ -1,4 +1,4 @@
-import type { CreateProductRequest, Variant, VariantFilters } from '../../features/catalog/domain/types'
+import type { CreateProductRequest, UpdateProductRequest, Variant, VariantFilters } from '../../features/catalog/domain/types'
 import { apiRequest } from './httpClient'
 
 function query(filters: VariantFilters) {
@@ -29,6 +29,24 @@ export const productsApi = {
 
     return apiRequest<Variant[]>('/productos', {
       method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  updateProduct(idProducto: number, payload: UpdateProductRequest, imageFile?: File | null) {
+    if (imageFile) {
+      const formData = new FormData()
+      formData.append('producto', new Blob([JSON.stringify(payload)], { type: 'application/json' }))
+      formData.append('imagen', imageFile)
+
+      return apiRequest<Variant[]>(`/productos/${idProducto}`, {
+        method: 'PUT',
+        body: formData,
+      })
+    }
+
+    return apiRequest<Variant[]>(`/productos/${idProducto}`, {
+      method: 'PUT',
       body: JSON.stringify(payload),
     })
   },

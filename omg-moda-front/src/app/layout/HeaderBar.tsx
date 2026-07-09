@@ -7,7 +7,7 @@ import { productsApi } from '../../infra/api/productsApi'
 import { Drawer } from '../../shared/components/Drawer'
 import { IconButton } from '../../shared/components/IconButton'
 import { cn } from '../../shared/utils/cn'
-import { navItems } from './navigation'
+import { getVisibleNavItems } from './navigation'
 
 const titles: Record<string, { title: string; subtitle: string }> = {
   '/dashboard': {
@@ -64,7 +64,7 @@ export function HeaderBar() {
   const searchTerm = search.trim()
   const encodedSearch = encodeURIComponent(searchTerm)
   const visibleNavItems = useMemo(
-    () => navItems.filter((item) => !item.adminOnly || session?.rol === 'ADMIN'),
+    () => getVisibleNavItems(session?.rol),
     [session?.rol],
   )
 

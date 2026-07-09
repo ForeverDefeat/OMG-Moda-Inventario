@@ -3,6 +3,7 @@ import type { AuthSession } from '../../features/auth/domain/types'
 export const API_ORIGIN = import.meta.env.VITE_API_ORIGIN ?? 'http://localhost:8080'
 const API_BASE_URL = `${API_ORIGIN}/api/v1`
 const SESSION_KEY = 'clothwise.session'
+export const SESSION_EXPIRED_EVENT = 'clothwise:session-expired'
 
 export class ApiError extends Error {
   status: number
@@ -21,23 +22,47 @@ export class ApiError extends Error {
 }
 
 export function readStoredSession(): AuthSession | null {
-  const raw = localStorage.getItem(SESSION_KEY)
+  const raw = sessionStorage.getItem(SESSION_KEY)
   if (!raw) return null
 
   try {
-    return JSON.parse(raw) as AuthSession
+    const session = JSON.parse(raw) as AuthSession
+    if (isSessionExpired(session)) {
+      clearStoredSession()
+      return null
+    }
+    return session
   } catch {
-    localStorage.removeItem(SESSION_KEY)
+    clearStoredSession()
     return null
   }
 }
 
 export function persistSession(session: AuthSession | null) {
   if (!session) {
-    localStorage.removeItem(SESSION_KEY)
+    clearStoredSession()
     return
   }
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+}
+
+export function clearStoredSession() {
+  sessionStorage.removeItem(SESSION_KEY)
+  localStorage.removeItem(SESSION_KEY)
+}
+
+export function sessionExpirationMs(session: AuthSession) {
+  const expirationTime = new Date(session.expiracion).getTime()
+  return Number.isFinite(expirationTime) ? expirationTime - Date.now() : 0
+}
+
+export function isSessionExpired(session: AuthSession) {
+  return sessionExpirationMs(session) <= 0
+}
+
+function notifySessionExpired() {
+  clearStoredSession()
+  window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
 }
 
 async function parseResponse<T>(response: Response): Promise<T> {
@@ -45,6 +70,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
   const payload = text ? JSON.parse(text) : null
 
   if (!response.ok) {
+    if (response.status === 401) notifySessionExpired()
     throw new ApiError(
       payload?.message ?? `Error HTTP ${response.status}`,
       response.status,
@@ -97,6 +123,7 @@ export async function downloadRequest(
   })
 
   if (!response.ok) {
+    if (response.status === 401) notifySessionExpired()
     const text = await response.text()
     let message = `Error HTTP ${response.status}`
     try {

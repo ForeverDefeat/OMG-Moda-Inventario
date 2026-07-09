@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom'
 import { Crown } from 'lucide-react'
 import { useAuth } from '../../features/auth/application/useAuth'
-import { navItems } from './navigation'
+import { getVisibleNavItems } from './navigation'
 import { cn } from '../../shared/utils/cn'
 
 export function SidebarNav() {
   const { session } = useAuth()
-  const visibleNavItems = navItems.filter((item) => !item.adminOnly || session?.rol === 'ADMIN')
+  const visibleNavItems = getVisibleNavItems(session?.rol)
 
   return (
     <aside className="hidden w-[var(--sidebar-width)] shrink-0 border-r border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-5 lg:block">

@@ -1,7 +1,9 @@
 package com.omgmoda.sistema_inventario.producto.infraestructura.config;
 
+import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IActualizarProductoUseCase;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IBuscarVariantesUseCase;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IRegistrarProductoUseCase;
+import com.omgmoda.sistema_inventario.producto.aplicacion.usecases.ActualizarProductoUseCaseImpl;
 import com.omgmoda.sistema_inventario.producto.aplicacion.usecases.BuscarVariantesUseCaseImpl;
 import com.omgmoda.sistema_inventario.producto.aplicacion.usecases.RegistrarProductoUseCaseImpl;
 import com.omgmoda.sistema_inventario.producto.dominio.ports.IVarianteRepository;
@@ -37,6 +39,11 @@ public class ProductoModuleConfig {
     @Bean
     public IRegistrarProductoUseCase registrarProductoUseCase(IVarianteRepository repo) {
         return new RegistrarProductoUseCaseImpl(repo);
+    }
+
+    @Bean
+    public IActualizarProductoUseCase actualizarProductoUseCase(IVarianteRepository repo) {
+        return new ActualizarProductoUseCaseImpl(repo);
     }
 
     /**

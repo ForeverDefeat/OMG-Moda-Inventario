@@ -21,6 +21,9 @@ public interface IVarianteRepository {
     /** Retorna todas las variantes de un producto por su id. */
     List<VarianteProducto> findByProductoId(Long idProducto);
 
+    /** Actualiza los datos visuales del producto y retorna sus variantes renovadas. */
+    List<VarianteProducto> updateProductoVisuals(Long idProducto, String nombre, String imageUrl);
+
     /** Retorna variantes filtrando por talla y/o color (null = sin filtro). */
     List<VarianteProducto> findByFiltros(String talla, String color, String categoria, String sku);
 

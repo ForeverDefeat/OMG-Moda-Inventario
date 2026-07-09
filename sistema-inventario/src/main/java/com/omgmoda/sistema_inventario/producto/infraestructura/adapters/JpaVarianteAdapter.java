@@ -49,6 +49,16 @@ public class JpaVarianteAdapter implements IVarianteRepository {
     }
 
     @Override
+    public List<VarianteProducto> updateProductoVisuals(Long idProducto, String nombre, String imageUrl) {
+        ProductoJpaEntity producto = productoJpaRepository.findById(idProducto)
+                .orElseThrow(() -> new NotFoundException("Producto no encontrado con id: " + idProducto));
+        producto.setNombre(nombre);
+        producto.setImageUrl(imageUrl);
+        productoJpaRepository.save(producto);
+        return findByProductoId(idProducto);
+    }
+
+    @Override
     public List<VarianteProducto> findByFiltros(String talla, String color, String categoria, String sku) {
         return jpaRepository.findByFiltros(talla, color, categoria, sku)
                 .stream()

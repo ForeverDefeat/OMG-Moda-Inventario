@@ -122,10 +122,6 @@ export function LoginPage() {
                 </span>
               </label>
 
-              <label className="mt-1 flex items-center gap-2">
-                <input type="checkbox" defaultChecked className="size-4 rounded-sm border-[var(--color-border)] accent-[var(--color-primary)]" />
-                <span className="text-sm text-[var(--color-muted)]">Mantener sesion iniciada</span>
-              </label>
             </div>
 
             {error && (

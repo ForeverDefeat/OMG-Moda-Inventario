@@ -7,6 +7,7 @@ import { DataTable, type Column } from '../../../shared/components/DataTable'
 import { KpiCard } from '../../../shared/components/KpiCard'
 import { StatusBadge } from '../../../shared/components/Badge'
 import { SearchInput } from '../../../shared/components/SearchInput'
+import { useAuth } from '../../auth/application/useAuth'
 
 const columns: Column<PurchaseSuggestion>[] = [
   { key: 'producto', header: 'Producto', render: (row) => <span className="font-semibold">{row.producto}</span>, sortable: true, sortValue: (row) => row.producto },
@@ -17,8 +18,8 @@ const columns: Column<PurchaseSuggestion>[] = [
 ]
 
 export function PurchaseOrdersPage() {
+  const { session } = useAuth()
   const [suggestions, setSuggestions] = useState<PurchaseSuggestion[]>([])
-  const [message, setMessage] = useState('Cargando sugerencias desde backend.')
   const [query, setQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('Todas')
   const [providerFilter, setProviderFilter] = useState('Todos')
@@ -43,26 +44,20 @@ export function PurchaseOrdersPage() {
   const total = filteredSuggestions.reduce((sum, item) => sum + item.costoEstimado, 0)
   const visibleProviders = new Set(filteredSuggestions.map((item) => item.proveedor)).size
   const hasActiveFilters = Boolean(query.trim()) || priorityFilter !== 'Todas' || providerFilter !== 'Todos'
+  const canManagePurchaseOrders = session?.rol === 'ADMIN'
 
   useEffect(() => {
     purchaseApi.listSuggestions()
       .then((data) => {
         setSuggestions(data)
-        setMessage(data.length ? 'Sugerencias conectadas al backend.' : 'Backend conectado sin sugerencias de compra.')
       })
       .catch(() => {
         setSuggestions([])
-        setMessage('Backend no disponible. No se muestran datos mock.')
       })
   }, [])
 
   return (
     <div className="page-grid">
-      <section>
-        <h1 className="panel-title">Ordenes de Compra</h1>
-        <p className="text-sm text-[var(--color-muted)]">{message}</p>
-      </section>
-
       <section className="flex flex-col gap-8 lg:flex-row">
         <aside className="flex shrink-0 flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:w-64">
           <KpiCard label="Sugerencias" value={String(filteredSuggestions.length)} helper={`${suggestions.length} totales`} icon={PackageSearch} />
@@ -116,7 +111,9 @@ export function PurchaseOrdersPage() {
                 <StatusBadge status={item.prioridad} />
                 <h3 className="mt-3 font-bold">{item.producto}</h3>
                 <p className="mt-1 text-sm text-[var(--color-muted)]">{item.motivo}</p>
-                <ActionButton variant="secondary" className="mt-4 w-full"><Link2 size={16} /> Vincular a Stock</ActionButton>
+                {canManagePurchaseOrders && (
+                  <ActionButton variant="secondary" className="mt-4 w-full"><Link2 size={16} /> Vincular a Stock</ActionButton>
+                )}
               </article>
             ))}
           </section>

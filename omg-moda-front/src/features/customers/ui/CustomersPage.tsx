@@ -7,6 +7,7 @@ import { DataTable, type Column } from '../../../shared/components/DataTable'
 import { KpiCard } from '../../../shared/components/KpiCard'
 import { StatusBadge } from '../../../shared/components/Badge'
 import { Modal } from '../../../shared/components/Modal'
+import { useAuth } from '../../auth/application/useAuth'
 
 const columns: Column<Customer>[] = [
   { key: 'cliente', header: 'Cliente', render: (row) => <span className="font-semibold">{row.nombre}</span>, sortable: true, sortValue: (row) => row.nombre },
@@ -17,9 +18,10 @@ const columns: Column<Customer>[] = [
 ]
 
 export function CustomersPage() {
+  const { session } = useAuth()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [modalOpen, setModalOpen] = useState(false)
-  const [message, setMessage] = useState('Cargando clientes desde backend.')
+  const canManageCustomers = session?.rol === 'ADMIN'
   const total = customers.reduce((sum, customer) => sum + customer.totalCompras, 0)
   const recurrent = customers.length
     ? Math.round((customers.filter((customer) => customer.segmento !== 'Nuevo').length / customers.length) * 100)
@@ -29,11 +31,9 @@ export function CustomersPage() {
     customersApi.listCustomers()
       .then((data) => {
         setCustomers(data)
-        setMessage(data.length ? 'Clientes conectados al backend.' : 'Backend conectado sin clientes registrados.')
       })
       .catch(() => {
         setCustomers([])
-        setMessage('Backend no disponible. No se muestran datos mock.')
       })
   }, [])
 
@@ -52,23 +52,20 @@ export function CustomersPage() {
     try {
       const created = await customersApi.createCustomer(payload)
       setCustomers((current) => [...current, created].sort((a, b) => a.nombre.localeCompare(b.nombre)))
-      setMessage('Cliente creado en backend.')
       setModalOpen(false)
       event.currentTarget.reset()
     } catch {
-      setMessage('No se pudo crear el cliente en backend. No se aplicaron cambios locales.')
+      return
     }
   }
 
   return (
     <div className="page-grid">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="panel-title">Clientes</h1>
-          <p className="text-sm text-[var(--color-muted)]">{message}</p>
-        </div>
-        <ActionButton onClick={() => setModalOpen(true)}><UserPlus size={17} /> Anadir cliente</ActionButton>
-      </section>
+      {canManageCustomers && (
+        <section className="flex justify-end">
+          <ActionButton onClick={() => setModalOpen(true)}><UserPlus size={17} /> Anadir cliente</ActionButton>
+        </section>
+      )}
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Total de clientes" value={String(customers.length)} icon={Users} />
@@ -85,6 +82,7 @@ export function CustomersPage() {
       </section>
       <DataTable rows={customers} columns={columns} emptyText="Sin clientes registrados" maxHeight="480px" />
 
+      {canManageCustomers && (
       <Modal open={modalOpen} title="Nuevo cliente" onClose={() => setModalOpen(false)}>
         <form className="grid gap-4" onSubmit={submitCustomer}>
           <label className="grid gap-1 text-sm font-semibold">
@@ -123,6 +121,7 @@ export function CustomersPage() {
           </div>
         </form>
       </Modal>
+      )}
     </div>
   )
 }

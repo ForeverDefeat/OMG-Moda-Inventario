@@ -262,17 +262,6 @@ export function SalesPosPage() {
 
   return (
     <div className="grid gap-6">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="panel-title">Ventas y POS</h1>
-          <p className="text-sm text-[var(--color-muted)]">Registra ventas, consulta productos y arma el carrito de tienda.</p>
-        </div>
-        <div className="flex gap-2">
-          <ActionButton variant="secondary">Exportar</ActionButton>
-          <ActionButton>Nueva venta</ActionButton>
-        </div>
-      </section>
-
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard label="Ventas registradas" value={String(sales.length)} icon={Receipt} />
         <KpiCard label="Ticket promedio" value={`S/ ${ticketAverage.toFixed(2)}`} icon={ShoppingCart} tone="success" />

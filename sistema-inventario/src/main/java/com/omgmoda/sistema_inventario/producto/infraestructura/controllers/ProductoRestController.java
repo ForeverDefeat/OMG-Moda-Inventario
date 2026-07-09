@@ -1,7 +1,9 @@
 package com.omgmoda.sistema_inventario.producto.infraestructura.controllers;
 
+import com.omgmoda.sistema_inventario.producto.aplicacion.dto.ActualizarProductoDTO;
 import com.omgmoda.sistema_inventario.producto.aplicacion.dto.CrearProductoDTO;
 import com.omgmoda.sistema_inventario.producto.aplicacion.dto.VarianteResponseDTO;
+import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IActualizarProductoUseCase;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IBuscarVariantesUseCase;
 import com.omgmoda.sistema_inventario.producto.aplicacion.ports.IRegistrarProductoUseCase;
 import com.omgmoda.sistema_inventario.producto.infraestructura.storage.ProductoImageStorageService;
@@ -32,13 +34,16 @@ import java.util.List;
 public class ProductoRestController {
 
     private final IRegistrarProductoUseCase registrarProductoUseCase;
+    private final IActualizarProductoUseCase actualizarProductoUseCase;
     private final IBuscarVariantesUseCase buscarVariantesUseCase;
     private final ProductoImageStorageService imageStorageService;
 
     public ProductoRestController(IRegistrarProductoUseCase registrarProductoUseCase,
+                                  IActualizarProductoUseCase actualizarProductoUseCase,
                                   IBuscarVariantesUseCase buscarVariantesUseCase,
                                   ProductoImageStorageService imageStorageService) {
         this.registrarProductoUseCase = registrarProductoUseCase;
+        this.actualizarProductoUseCase = actualizarProductoUseCase;
         this.buscarVariantesUseCase = buscarVariantesUseCase;
         this.imageStorageService = imageStorageService;
     }
@@ -79,6 +84,36 @@ public class ProductoRestController {
         );
         List<VarianteResponseDTO> resultado = registrarProductoUseCase.registrar(dtoConImagen);
         return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
+    }
+
+    @PutMapping(path = "/{idProducto}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Actualizar nombre e imagen de producto",
+            description = "Actualiza datos visuales del producto y retorna sus variantes. Requiere rol ADMIN."
+    )
+    public ResponseEntity<List<VarianteResponseDTO>> actualizarProducto(
+            @PathVariable Long idProducto,
+            @Valid @RequestBody ActualizarProductoDTO dto) {
+        return ResponseEntity.ok(actualizarProductoUseCase.actualizar(idProducto, dto));
+    }
+
+    @PutMapping(path = "/{idProducto}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Actualizar producto con imagen subida",
+            description = "Actualiza nombre e imagen del producto usando una imagen subida o URL. Requiere rol ADMIN."
+    )
+    public ResponseEntity<List<VarianteResponseDTO>> actualizarProductoConImagen(
+            @PathVariable Long idProducto,
+            @Valid @RequestPart("producto") ActualizarProductoDTO dto,
+            @RequestPart(value = "imagen", required = false) MultipartFile imagen) {
+        String imageUrl = imageStorageService.store(imagen);
+        ActualizarProductoDTO dtoConImagen = new ActualizarProductoDTO(
+                dto.nombre(),
+                imageUrl != null ? imageUrl : dto.imageUrl()
+        );
+        return ResponseEntity.ok(actualizarProductoUseCase.actualizar(idProducto, dtoConImagen));
     }
 
     /**

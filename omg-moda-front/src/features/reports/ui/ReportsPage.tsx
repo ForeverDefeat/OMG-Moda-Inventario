@@ -151,7 +151,7 @@ export function ReportsPage() {
   const [category, setCategory] = useState<MetricDatum[]>([])
   const [rotation, setRotation] = useState<MetricDatum[]>([])
   const [alerts, setAlerts] = useState<Variant[]>([])
-  const [status, setStatus] = useState('Cargando reportes desde backend.')
+  const [, setStatus] = useState('Cargando reportes desde backend.')
   const [downloading, setDownloading] = useState(false)
 
   const activeRange = useMemo(() => {
@@ -189,7 +189,7 @@ export function ReportsPage() {
         setCategory(categoryResponse)
         setRotation(rotationData)
         setAlerts(alertData)
-        setStatus('Reportes conectados al backend.')
+        setStatus('Datos cargados.')
       })
       .catch(() => {
         setSummary(emptySummary)
@@ -220,14 +220,7 @@ export function ReportsPage() {
 
   return (
     <div className="page-grid">
-      <section className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <h1 className="panel-title">Reportes y Analisis</h1>
-          <p className="text-sm text-[var(--color-muted)]">
-            {status} Rango activo: {rangeLabel(activeRange.start, activeRange.end)}
-          </p>
-        </div>
-
+      <section className="flex justify-end">
         <div className="grid gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm xl:min-w-[720px]">
           <div className="flex flex-wrap items-end gap-2">
             <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">
