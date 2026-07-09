@@ -44,6 +44,11 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          if ! ssh-keygen -y -f ~/.ssh/deploy_key >/dev/null; then
+            echo "VPS_SSH_KEY is not a valid unencrypted OpenSSH private key."
+            echo "Copy the complete private key, including BEGIN/END lines, into the GitHub secret."
+            exit 1
+          fi
           ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts
 
       - name: Deploy on VPS
