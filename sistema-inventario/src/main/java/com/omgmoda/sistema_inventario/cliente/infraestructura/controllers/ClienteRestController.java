@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Adaptador REST para exponer las operaciones de ClienteRestController mediante endpoints HTTP.
+ */
 @RestController
 @RequestMapping("/api/v1/clientes")
 @Tag(name = "Clientes", description = "Gestion de clientes y segmentacion comercial.")

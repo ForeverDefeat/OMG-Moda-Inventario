@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 @Schema(description = "Resumen ejecutivo para reportes.")
 public record ReporteResumenDTO(
         BigDecimal ventasMes,

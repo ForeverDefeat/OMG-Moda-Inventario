@@ -7,6 +7,9 @@ import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 public record WebhookStubPagoDTO(
         @NotBlank String providerEventId,
         @NotBlank String providerReference,

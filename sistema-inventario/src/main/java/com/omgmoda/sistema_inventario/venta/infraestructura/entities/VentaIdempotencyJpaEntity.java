@@ -8,6 +8,9 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad JPA que conserva en base de datos el estado asociado a VentaIdempotencyJpaEntity.
+ */
 @Entity
 @Table(name = "VENTA_IDEMPOTENCY")
 public class VentaIdempotencyJpaEntity {

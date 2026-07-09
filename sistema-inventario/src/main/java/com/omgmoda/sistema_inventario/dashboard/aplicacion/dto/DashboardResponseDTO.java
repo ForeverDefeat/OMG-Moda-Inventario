@@ -5,6 +5,9 @@ import com.omgmoda.sistema_inventario.reportes.aplicacion.dto.MetricDatumDTO;
 
 import java.util.List;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 public record DashboardResponseDTO(
         DashboardKpisDTO kpis,
         List<MetricDatumDTO> ventasTendencia,

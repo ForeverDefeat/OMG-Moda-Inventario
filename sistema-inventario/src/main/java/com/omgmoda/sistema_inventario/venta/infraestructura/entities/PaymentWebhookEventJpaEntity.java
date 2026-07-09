@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 @Table(name = "PAYMENT_WEBHOOK_EVENT", uniqueConstraints = {
         @UniqueConstraint(name = "uk_payment_provider_event", columnNames = "provider_event_id")
 })
+/**
+ * Entidad JPA que conserva en base de datos el estado asociado a PaymentWebhookEventJpaEntity.
+ */
 public class PaymentWebhookEventJpaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

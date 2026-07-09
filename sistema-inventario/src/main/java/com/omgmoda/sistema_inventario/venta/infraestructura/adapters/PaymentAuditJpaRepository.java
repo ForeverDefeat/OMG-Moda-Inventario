@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
+/**
+ * Repositorio Spring Data JPA para consultas y persistencia de PaymentAuditJpaRepository.
+ */
 public interface PaymentAuditJpaRepository extends JpaRepository<PaymentAuditJpaEntity, Long> {
     List<PaymentAuditJpaEntity> findByIdPaymentOrderByCreatedAtAsc(Long idPayment);
 }

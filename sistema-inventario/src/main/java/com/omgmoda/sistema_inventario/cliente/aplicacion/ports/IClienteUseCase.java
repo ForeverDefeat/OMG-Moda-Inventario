@@ -5,6 +5,9 @@ import com.omgmoda.sistema_inventario.cliente.aplicacion.dto.CrearClienteDTO;
 
 import java.util.List;
 
+/**
+ * Puerto de entrada que declara una operacion disponible para los adaptadores de infraestructura.
+ */
 public interface IClienteUseCase {
 
     List<ClienteResponseDTO> listar();

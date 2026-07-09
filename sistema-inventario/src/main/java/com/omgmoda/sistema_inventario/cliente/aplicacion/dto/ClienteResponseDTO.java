@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 @Schema(description = "Datos de cliente para gestion comercial.")
 public record ClienteResponseDTO(
         @Schema(description = "Identificador del cliente.", example = "1")

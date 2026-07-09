@@ -31,6 +31,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Servicio de aplicacion que coordina reglas de negocio y dependencias para ReportesDownloadExportService.
+ */
 @Service
 public class ReportesDownloadExportService {
 

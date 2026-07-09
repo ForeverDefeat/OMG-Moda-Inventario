@@ -2,6 +2,9 @@ package com.omgmoda.sistema_inventario.venta.aplicacion.dto;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 public record PaymentAuditResponseDTO(
         String eventType,
         String previousStatus,

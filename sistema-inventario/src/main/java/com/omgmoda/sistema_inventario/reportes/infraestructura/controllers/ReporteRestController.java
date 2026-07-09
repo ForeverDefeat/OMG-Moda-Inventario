@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Adaptador REST para exponer las operaciones de ReporteRestController mediante endpoints HTTP.
+ */
 @RestController
 @RequestMapping("/api/v1/reportes")
 @Tag(name = "Reportes", description = "Consultas agregadas de ventas, inventario y rotacion.")

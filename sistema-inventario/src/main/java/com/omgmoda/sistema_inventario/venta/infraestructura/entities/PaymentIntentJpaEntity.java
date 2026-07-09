@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 @Table(name = "PAYMENT_INTENT", uniqueConstraints = {
         @UniqueConstraint(name = "uk_payment_provider_reference", columnNames = "provider_reference")
 })
+/**
+ * Entidad JPA que conserva en base de datos el estado asociado a PaymentIntentJpaEntity.
+ */
 public class PaymentIntentJpaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

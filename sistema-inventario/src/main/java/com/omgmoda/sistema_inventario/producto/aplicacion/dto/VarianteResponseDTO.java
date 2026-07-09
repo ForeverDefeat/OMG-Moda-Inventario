@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 @Schema(description = "Datos de una variante de producto.")
 public record VarianteResponseDTO(
 

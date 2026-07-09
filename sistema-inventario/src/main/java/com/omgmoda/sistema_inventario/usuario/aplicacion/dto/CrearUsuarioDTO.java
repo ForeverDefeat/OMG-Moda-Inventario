@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 public record CrearUsuarioDTO(
         @NotBlank(message = "El nombre es obligatorio.")
         @Size(max = 80, message = "El nombre no puede superar 80 caracteres.")

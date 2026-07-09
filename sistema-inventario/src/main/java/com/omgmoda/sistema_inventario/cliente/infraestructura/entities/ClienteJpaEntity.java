@@ -10,6 +10,9 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Entidad JPA que conserva en base de datos el estado asociado a ClienteJpaEntity.
+ */
 @Entity
 @Table(name = "CLIENTE")
 public class ClienteJpaEntity {

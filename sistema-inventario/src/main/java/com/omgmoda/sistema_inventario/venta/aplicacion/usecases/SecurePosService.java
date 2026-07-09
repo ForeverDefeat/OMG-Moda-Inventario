@@ -50,6 +50,9 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Servicio POS seguro: crea ventas pendientes, reserva stock, confirma pagos y deja trazabilidad auditable.
+ */
 @Service
 public class SecurePosService {
 
@@ -88,6 +91,7 @@ public class SecurePosService {
     public VentaResponseDTO crearVentaPendiente(CrearVentaDTO dto, Long idUsuario, String idempotencyKey) {
         String normalizedKey = normalizarKey(idempotencyKey);
         String payloadHash = hashPayload(dto);
+        // La idempotencia evita duplicar ventas si el POS reintenta el mismo request por timeout o error de red.
         if (normalizedKey != null) {
             var existing = idempotencyRepository.findById(normalizedKey);
             if (existing.isPresent()) {
@@ -112,6 +116,7 @@ public class SecurePosService {
 
         BigDecimal total = BigDecimal.ZERO;
         for (CrearVentaDTO.ItemVentaDTO item : dto.items()) {
+            // El bloqueo pesimista mantiene consistente el stock reservado cuando dos cajas venden la misma variante.
             VarianteJpaEntity variante = varianteRepository.findByIdForUpdate(item.idVariante())
                     .orElseThrow(() -> new NotFoundException("Variante no encontrada con id: " + item.idVariante()));
             int disponible = variante.getStockActual() - variante.getStockReservado();
@@ -130,6 +135,7 @@ public class SecurePosService {
         }
 
         VentaJpaEntity saved = ventaRepository.save(venta);
+        // La reserva separada permite expirar o cancelar la venta sin perder la trazabilidad del intento de pago.
         for (CrearVentaDTO.ItemVentaDTO item : dto.items()) {
             StockReservaJpaEntity reserva = new StockReservaJpaEntity();
             reserva.setIdVenta(saved.getId());
@@ -241,6 +247,7 @@ public class SecurePosService {
         String payloadHash = sha256(rawPayload == null ? dto.toString() : rawPayload);
         var existing = webhookRepository.findByProviderEventId(dto.providerEventId());
         if (existing.isPresent()) {
+            // Los proveedores pueden reenviar webhooks; se marca como duplicado y no se repite la accion.
             PaymentWebhookEventJpaEntity event = existing.get();
             event.setStatus("DUPLICATE");
             return paymentRepository.findByProviderReference(dto.providerReference()).map(this::paymentResponse).orElse(null);
@@ -368,6 +375,7 @@ public class SecurePosService {
         if (reservas.isEmpty()) {
             throw new DomainException("La venta no tiene reserva activa de stock.");
         }
+        // Confirmar consume la reserva: baja stock real y libera el saldo reservado en una misma transaccion.
         for (StockReservaJpaEntity reserva : reservas) {
             VarianteJpaEntity variante = varianteRepository.findByIdForUpdate(reserva.getIdVariante())
                     .orElseThrow(() -> new NotFoundException("Variante no encontrada con id: " + reserva.getIdVariante()));
@@ -407,6 +415,7 @@ public class SecurePosService {
 
     private void liberarReservas(Long idVenta, EstadoReservaStock estadoFinal) {
         List<StockReservaJpaEntity> reservas = reservaRepository.findByIdVentaAndEstadoForUpdate(idVenta, EstadoReservaStock.ACTIVE);
+        // Cancelaciones y expiraciones no consumen stock; solo devuelven la reserva al disponible.
         for (StockReservaJpaEntity reserva : reservas) {
             VarianteJpaEntity variante = varianteRepository.findByIdForUpdate(reserva.getIdVariante())
                     .orElseThrow(() -> new NotFoundException("Variante no encontrada con id: " + reserva.getIdVariante()));
@@ -522,6 +531,7 @@ public class SecurePosService {
                        String observation,
                        BigDecimal amount,
                        String providerEventId) {
+        // Cada cambio de estado de pago/venta queda como evento append-only para auditoria operativa.
         PaymentAuditJpaEntity audit = new PaymentAuditJpaEntity();
         audit.setIdPayment(payment.getId());
         audit.setIdVenta(payment.getIdVenta());

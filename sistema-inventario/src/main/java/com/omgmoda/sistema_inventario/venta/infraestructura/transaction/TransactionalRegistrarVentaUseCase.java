@@ -5,6 +5,9 @@ import com.omgmoda.sistema_inventario.venta.aplicacion.dto.VentaResponseDTO;
 import com.omgmoda.sistema_inventario.venta.aplicacion.ports.IRegistrarVentaUseCase;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Decorador transaccional que aplica limites de transaccion al caso de uso delegado.
+ */
 public class TransactionalRegistrarVentaUseCase implements IRegistrarVentaUseCase {
 
     private final IRegistrarVentaUseCase delegate;

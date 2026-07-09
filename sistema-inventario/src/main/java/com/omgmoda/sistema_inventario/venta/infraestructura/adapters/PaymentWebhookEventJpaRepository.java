@@ -5,6 +5,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
+/**
+ * Repositorio Spring Data JPA para consultas y persistencia de PaymentWebhookEventJpaRepository.
+ */
 public interface PaymentWebhookEventJpaRepository extends JpaRepository<PaymentWebhookEventJpaEntity, Long> {
     Optional<PaymentWebhookEventJpaEntity> findByProviderEventId(String providerEventId);
 }

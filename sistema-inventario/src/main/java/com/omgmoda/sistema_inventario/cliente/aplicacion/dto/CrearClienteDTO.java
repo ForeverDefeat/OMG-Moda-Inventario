@@ -11,6 +11,9 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 @Schema(description = "Solicitud para registrar un cliente.")
 public record CrearClienteDTO(
         @NotBlank(message = "El nombre del cliente es obligatorio.")

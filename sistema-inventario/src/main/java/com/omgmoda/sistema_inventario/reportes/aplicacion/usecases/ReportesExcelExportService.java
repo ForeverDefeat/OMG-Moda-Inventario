@@ -14,6 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Servicio de aplicacion que coordina reglas de negocio y dependencias para ReportesExcelExportService.
+ */
 @Service
 public class ReportesExcelExportService {
 

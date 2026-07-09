@@ -1,0 +1,136 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ClothWise
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Validate configuration
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_APP_DIR: ${{ vars.VPS_APP_DIR }}
+          BACKEND_SERVICE: ${{ vars.BACKEND_SERVICE }}
+        run: |
+          set -euo pipefail
+          test -n "$VPS_HOST"
+          test -n "$VPS_PORT"
+          test -n "$VPS_USER"
+          test -n "$VPS_SSH_KEY"
+          test -n "$VPS_APP_DIR"
+          test -n "$BACKEND_SERVICE"
+
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy on VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_APP_DIR: ${{ vars.VPS_APP_DIR }}
+          BACKEND_SERVICE: ${{ vars.BACKEND_SERVICE }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key \
+            -p "$VPS_PORT" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            'bash -s' -- "$VPS_APP_DIR" "$BACKEND_SERVICE" <<'REMOTE'
+          set -Eeuo pipefail
+
+          APP_DIR="$1"
+          BACKEND_SERVICE="$2"
+          JAR_DEST="/opt/clothwise/api/clothwise-api.jar"
+          FRONTEND_DEST="/var/www/clothwise/frontend"
+
+          rollback_backend() {
+            if [ -n "${JAR_BACKUP:-}" ] && [ -f "$JAR_BACKUP" ]; then
+              echo "Backend health check failed; restoring previous jar."
+              cp "$JAR_BACKUP" "$JAR_DEST"
+              systemctl restart "$BACKEND_SERVICE"
+            fi
+          }
+
+          cd "$APP_DIR"
+          git fetch origin master
+          git checkout master
+          git pull --ff-only origin master
+
+          cd "$APP_DIR/sistema-inventario"
+          chmod +x ./mvnw || true
+          ./mvnw clean package -DskipTests
+
+          JAR_PATH="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*sources.jar' ! -name '*javadoc.jar' | head -n 1)"
+          if [ -z "$JAR_PATH" ]; then
+            echo "No Spring Boot jar was found in sistema-inventario/target."
+            exit 1
+          fi
+
+          JAR_BACKUP=""
+          if [ -f "$JAR_DEST" ]; then
+            JAR_BACKUP="${JAR_DEST}.$(date +%Y%m%d%H%M%S).bak"
+            cp "$JAR_DEST" "$JAR_BACKUP"
+          fi
+
+          install -m 0644 "$JAR_PATH" "$JAR_DEST"
+          if ! systemctl restart "$BACKEND_SERVICE"; then
+            rollback_backend
+            exit 1
+          fi
+
+          sleep 10
+          if ! systemctl is-active --quiet "$BACKEND_SERVICE"; then
+            rollback_backend
+            exit 1
+          fi
+
+          if ! curl --fail --silent --show-error --max-time 20 http://127.0.0.1:8081/actuator/health; then
+            rollback_backend
+            exit 1
+          fi
+
+          cd "$APP_DIR/omg-moda-front"
+          npm ci
+          npm run build
+
+          if [ ! -d dist ]; then
+            echo "Frontend dist directory was not generated."
+            exit 1
+          fi
+
+          mkdir -p "$FRONTEND_DEST"
+          if command -v rsync >/dev/null 2>&1; then
+            rsync -a --delete dist/ "$FRONTEND_DEST/"
+          else
+            find "$FRONTEND_DEST" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+            cp -a dist/. "$FRONTEND_DEST/"
+          fi
+
+          nginx -t
+          systemctl reload nginx
+          REMOTE

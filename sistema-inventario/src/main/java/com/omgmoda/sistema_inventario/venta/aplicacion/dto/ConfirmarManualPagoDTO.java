@@ -8,6 +8,9 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 public record ConfirmarManualPagoDTO(
         @DecimalMin(value = "0.0", inclusive = false, message = "El monto recibido debe ser mayor a cero.")
         @Digits(integer = 10, fraction = 2)

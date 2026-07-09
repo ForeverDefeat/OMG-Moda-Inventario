@@ -39,6 +39,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Adaptador REST para exponer las operaciones de VentaRestController mediante endpoints HTTP.
+ */
 @RestController
 @RequestMapping("/api/v1/ventas")
 @Tag(name = "Ventas", description = "Registro, consulta y anulacion de ventas.")

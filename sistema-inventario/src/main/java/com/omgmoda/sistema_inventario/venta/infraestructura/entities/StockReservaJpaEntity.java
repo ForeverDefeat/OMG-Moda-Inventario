@@ -12,6 +12,9 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad JPA que conserva en base de datos el estado asociado a StockReservaJpaEntity.
+ */
 @Entity
 @Table(name = "STOCK_RESERVA")
 public class StockReservaJpaEntity {

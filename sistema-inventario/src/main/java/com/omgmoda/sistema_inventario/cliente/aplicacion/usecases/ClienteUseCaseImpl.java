@@ -13,6 +13,9 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Implementacion de caso de uso que orquesta validaciones, dominio y puertos de persistencia.
+ */
 @Service
 public class ClienteUseCaseImpl implements IClienteUseCase {
 

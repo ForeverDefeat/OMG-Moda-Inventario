@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Servicio de aplicacion que coordina reglas de negocio y dependencias para CompraSugerenciaService.
+ */
 @Service
 public class CompraSugerenciaService {
 

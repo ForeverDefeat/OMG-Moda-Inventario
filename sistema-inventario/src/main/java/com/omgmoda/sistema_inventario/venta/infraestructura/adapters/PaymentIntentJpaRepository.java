@@ -13,6 +13,9 @@ import java.util.List;
 import com.omgmoda.sistema_inventario.venta.dominio.EstadoPago;
 import com.omgmoda.sistema_inventario.venta.dominio.MetodoPago;
 
+/**
+ * Repositorio Spring Data JPA para consultas y persistencia de PaymentIntentJpaRepository.
+ */
 public interface PaymentIntentJpaRepository extends JpaRepository<PaymentIntentJpaEntity, Long> {
     Optional<PaymentIntentJpaEntity> findByIdVenta(Long idVenta);
     Optional<PaymentIntentJpaEntity> findByProviderReference(String providerReference);

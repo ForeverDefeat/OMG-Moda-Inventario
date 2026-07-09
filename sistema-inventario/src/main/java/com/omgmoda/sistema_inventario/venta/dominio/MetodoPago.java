@@ -1,5 +1,7 @@
 package com.omgmoda.sistema_inventario.venta.dominio;
-
+/**
+ * Enumeracion de dominio que lista los estados o tipos validos para MetodoPago.
+ */
 public enum MetodoPago {
     EFECTIVO,
     YAPE,

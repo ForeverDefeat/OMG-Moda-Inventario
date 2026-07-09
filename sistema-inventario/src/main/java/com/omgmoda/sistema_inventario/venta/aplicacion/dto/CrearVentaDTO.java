@@ -14,6 +14,9 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 @Schema(description = "Solicitud para registrar una venta completa.")
 public record CrearVentaDTO(
 

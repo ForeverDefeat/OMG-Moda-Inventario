@@ -5,6 +5,9 @@ import com.omgmoda.sistema_inventario.inventario.aplicacion.dto.RegistrarAjusteD
 import com.omgmoda.sistema_inventario.inventario.aplicacion.ports.IRegistrarAjusteUseCase;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Decorador transaccional que aplica limites de transaccion al caso de uso delegado.
+ */
 public class TransactionalRegistrarAjusteUseCase implements IRegistrarAjusteUseCase {
 
     private final IRegistrarAjusteUseCase delegate;

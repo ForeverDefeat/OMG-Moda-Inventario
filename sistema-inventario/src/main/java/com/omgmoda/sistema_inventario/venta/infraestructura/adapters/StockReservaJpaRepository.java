@@ -10,6 +10,9 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+/**
+ * Repositorio Spring Data JPA para consultas y persistencia de StockReservaJpaRepository.
+ */
 public interface StockReservaJpaRepository extends JpaRepository<StockReservaJpaEntity, Long> {
     List<StockReservaJpaEntity> findByIdVenta(Long idVenta);
     List<StockReservaJpaEntity> findByIdVentaAndEstado(Long idVenta, EstadoReservaStock estado);

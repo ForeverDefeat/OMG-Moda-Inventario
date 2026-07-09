@@ -13,6 +13,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Servicio de aplicacion que coordina reglas de negocio y dependencias para ProductoImageStorageService.
+ */
 @Service
 public class ProductoImageStorageService {
 

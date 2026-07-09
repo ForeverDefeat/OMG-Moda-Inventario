@@ -5,6 +5,9 @@ import com.omgmoda.sistema_inventario.shared.dominio.exception.DomainException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Entidad de dominio que encapsula estado y reglas de negocio del sistema.
+ */
 public class Cliente {
 
     private Long id;

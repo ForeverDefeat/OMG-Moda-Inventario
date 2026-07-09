@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Adaptador REST para exponer las operaciones de CompraRestController mediante endpoints HTTP.
+ */
 @RestController
 @RequestMapping("/api/v1/compras")
 @Tag(name = "Compras", description = "Sugerencias de reposicion generadas desde inventario.")

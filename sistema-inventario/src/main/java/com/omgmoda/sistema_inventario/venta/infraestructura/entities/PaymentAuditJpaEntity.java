@@ -11,6 +11,9 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad JPA que conserva en base de datos el estado asociado a PaymentAuditJpaEntity.
+ */
 @Entity
 @Table(name = "PAYMENT_AUDIT")
 public class PaymentAuditJpaEntity {

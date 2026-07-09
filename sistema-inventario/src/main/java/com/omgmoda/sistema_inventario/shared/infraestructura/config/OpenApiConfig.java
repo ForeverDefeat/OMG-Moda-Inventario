@@ -9,6 +9,9 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configuracion Spring responsable de declarar beans y opciones tecnicas de OpenApiConfig.
+ */
 @Configuration
 public class OpenApiConfig {
 

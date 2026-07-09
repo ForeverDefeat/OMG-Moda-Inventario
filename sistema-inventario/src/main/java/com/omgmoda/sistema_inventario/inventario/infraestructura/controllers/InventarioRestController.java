@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Adaptador REST para exponer las operaciones de InventarioRestController mediante endpoints HTTP.
+ */
 @RestController
 @RequestMapping("/api/v1/movimientos")
 @Tag(name = "Inventario", description = "Movimientos de stock: entradas y ajustes.")

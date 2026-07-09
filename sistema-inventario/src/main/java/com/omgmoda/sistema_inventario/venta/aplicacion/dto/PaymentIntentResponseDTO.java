@@ -6,6 +6,9 @@ import com.omgmoda.sistema_inventario.venta.dominio.MetodoPago;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 public record PaymentIntentResponseDTO(
         Long idPayment,
         Long idVenta,

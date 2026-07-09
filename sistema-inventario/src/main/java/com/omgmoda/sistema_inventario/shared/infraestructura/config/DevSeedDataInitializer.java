@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 
+/**
+ * Componente del backend ClothWise dentro del paquete com.omgmoda.sistema_inventario.shared.infraestructura.config.
+ */
 @Component
 @Order(2)
 public class DevSeedDataInitializer implements ApplicationRunner {

@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO que define la estructura de datos intercambiada por la capa de aplicacion/API.
+ */
 @Schema(description = "Sugerencia de reposicion calculada desde el inventario.")
 public record CompraSugerenciaDTO(
         @Schema(description = "Identificador estable de la sugerencia.", example = "1")

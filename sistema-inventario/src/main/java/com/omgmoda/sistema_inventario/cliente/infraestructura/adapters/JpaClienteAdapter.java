@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Adaptador de infraestructura que traduce entre el modelo de dominio y la persistencia JPA.
+ */
 @Repository
 public class JpaClienteAdapter implements IClienteRepository {
 
