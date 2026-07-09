@@ -71,6 +71,7 @@ public class SecurityConfig {
                             "/v3/api-docs",
                             "/v3/api-docs/**"
                     ).permitAll()
+                    .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers("/uploads/**").permitAll()
 
                     // Login público
