@@ -543,8 +543,8 @@ export function CatalogPage() {
         </ActionButton>
       </section>
 
-      <section className="flex flex-col gap-8 lg:flex-row">
-        <details className="responsive-filter-panel shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 open:space-y-6 sm:rounded-2xl sm:p-5 lg:w-64 lg:space-y-6">
+      <section className="flex min-w-0 flex-col gap-8 lg:flex-row">
+        <details open className="responsive-filter-panel min-w-0 shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 open:space-y-6 sm:rounded-2xl sm:p-5 lg:w-64 lg:space-y-6">
           <summary className="cursor-pointer list-none font-bold text-[var(--color-text)] marker:hidden">
             <span className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><SlidersHorizontal size={17} /> Filtros del catalogo</span><span className="text-xs text-[var(--color-muted)]">Mostrar</span></span>
           </summary>
@@ -669,6 +669,7 @@ export function CatalogPage() {
           </div>
 
           <section className={cn(
+            'min-w-0',
             gridColumns === 5
               ? 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'
               : 'grid gap-4 md:grid-cols-2 xl:grid-cols-3',

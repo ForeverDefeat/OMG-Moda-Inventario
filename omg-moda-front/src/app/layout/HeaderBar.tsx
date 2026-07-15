@@ -138,7 +138,7 @@ export function HeaderBar() {
           </div>
         </div>
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 min-[1700px]:flex">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 min-[1900px]:flex">
           {visibleNavItems.map(({ href, label }) => (
             <NavLink
               key={href}
@@ -194,7 +194,7 @@ export function HeaderBar() {
         </form>
 
         <div className="flex items-center gap-2">
-          <IconButton label="Menu" icon={Menu} className="min-[1700px]:hidden" onClick={() => setMobileOpen(true)} />
+          <IconButton label="Menu" icon={Menu} className="min-[1900px]:hidden" onClick={() => setMobileOpen(true)} />
           <IconButton label="Notificaciones" icon={Bell} className="hidden sm:grid" />
           <div className="hidden min-w-[150px] text-right sm:block">
             <p className="text-sm font-semibold text-[var(--color-text)]">{session?.nombre ?? 'Usuario'}</p>

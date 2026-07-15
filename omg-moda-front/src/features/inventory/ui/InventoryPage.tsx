@@ -321,8 +321,8 @@ export function InventoryPage() {
         <KpiCard label="Ajustes Pendientes" value={String(lowStockCount)} icon={ClipboardCheck} tone="warning" />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-        <details className="responsive-filter-panel rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 lg:rounded-2xl">
+      <section className="grid min-w-0 gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+        <details open className="responsive-filter-panel min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 lg:rounded-2xl">
           <summary className="cursor-pointer list-none font-bold marker:hidden lg:hidden">
             <span className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><MapPin size={16} /> {activeWarehouse.nombre}</span><span className="text-xs text-[var(--color-muted)]">Cambiar almacen</span></span>
           </summary>
@@ -517,8 +517,8 @@ function InventoryList({ groups, onEntry, onAdjust, onEditProduct }: {
           {sortedGroups.map((group) => {
             const primaryVariant = group.variants[0]
             return (
-              <article key={group.idProducto} className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-                <div className="grid gap-4 xl:grid-cols-[minmax(260px,.9fr)_1fr]">
+              <article key={group.idProducto} className="min-w-0 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                <div className="grid min-w-0 gap-4 2xl:grid-cols-[minmax(260px,.9fr)_1fr]">
                   <div className="flex min-w-0 gap-4">
                     <img
                       src={getVariantImage(primaryVariant)}

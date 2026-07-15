@@ -92,7 +92,7 @@ export function ProductVariantCard({
   return (
     <article
       className={cn(
-        'group flex h-full flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] transition-colors hover:border-black/50',
+        'group flex h-full min-w-0 max-w-full flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] transition-colors hover:border-black/50',
         onView && 'cursor-pointer focus-within:border-black/50',
         compact ? 'shadow-sm' : 'dashboard-card',
       )}
@@ -125,7 +125,7 @@ export function ProductVariantCard({
         )}
       </div>
 
-      <div className={cn('flex flex-1 flex-col gap-3 p-4', compact && 'gap-2 p-3')}>
+      <div className={cn('flex min-w-0 flex-1 flex-col gap-3 p-4', compact && 'gap-2 p-3')}>
         <div>
           <h3 className="line-clamp-1 font-bold leading-tight text-[var(--color-text)]">{group.nombreProducto}</h3>
           <p className="line-clamp-1 text-xs font-semibold text-[var(--color-muted)]">{selectedVariant.sku}</p>
@@ -201,8 +201,8 @@ export function ProductVariantCard({
           </div>
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-[var(--color-muted)]">
+        <div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-3">
+          <span className="min-w-0 break-words text-sm font-semibold text-[var(--color-muted)]">
             {availableStock(selectedVariant)} disponible / {selectedVariant.stockActual} fisico
           </span>
           <StockBadge stock={availableStock(selectedVariant)} min={selectedVariant.stockMinimo} />
