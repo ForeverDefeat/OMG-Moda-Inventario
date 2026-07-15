@@ -537,14 +537,17 @@ export function CatalogPage() {
   return (
     <div className="page-grid">
       <section className="flex justify-end">
-        <ActionButton type="button" onClick={openCreateModal}>
+        <ActionButton type="button" onClick={openCreateModal} className="w-full sm:w-auto">
           <PackagePlus size={17} />
           Anadir producto
         </ActionButton>
       </section>
 
       <section className="flex flex-col gap-8 lg:flex-row">
-        <aside className="flex shrink-0 flex-col gap-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:w-64">
+        <details className="responsive-filter-panel shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 open:space-y-6 sm:rounded-2xl sm:p-5 lg:w-64 lg:space-y-6">
+          <summary className="cursor-pointer list-none font-bold text-[var(--color-text)] marker:hidden">
+            <span className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><SlidersHorizontal size={17} /> Filtros del catalogo</span><span className="text-xs text-[var(--color-muted)]">Mostrar</span></span>
+          </summary>
           <div>
             <div className="mb-3 flex items-center gap-2">
               <SlidersHorizontal size={17} />
@@ -616,7 +619,7 @@ export function CatalogPage() {
               </button>
             )}
           </div>
-        </aside>
+        </details>
 
         <div className="min-w-0 flex-1">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -642,8 +645,8 @@ export function CatalogPage() {
                   {chip}
                 </button>
               ))}
-              <span className="mx-1 h-6 w-px bg-[var(--color-border)]" />
-              {[3, 5].map((columns) => (
+              <span className="mx-1 hidden h-6 w-px bg-[var(--color-border)] sm:block" />
+              <span className="hidden sm:contents">{[3, 5].map((columns) => (
                 <button
                   key={columns}
                   type="button"
@@ -661,7 +664,7 @@ export function CatalogPage() {
                 >
                   {columns} columnas
                 </button>
-              ))}
+              ))}</span>
             </div>
           </div>
 

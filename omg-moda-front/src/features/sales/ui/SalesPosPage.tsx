@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Minus, Plus, Receipt, ShoppingCart, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Minus, Plus, Receipt, ShoppingCart, Trash2, X } from 'lucide-react'
 import { useAuth } from '../../auth/application/useAuth'
 import { groupVariantsByProduct, productGroupMatchesSearch } from '../../catalog/domain/productGroups'
 import type { Variant } from '../../catalog/domain/types'
@@ -52,6 +52,7 @@ export function SalesPosPage() {
   const [pendingPayments, setPendingPayments] = useState<PaymentListItem[]>([])
   const [productPage, setProductPage] = useState(1)
   const [gridColumns, setGridColumns] = useState<GridColumns>(5)
+  const [cartOpen, setCartOpen] = useState(false)
   const { session } = useAuth()
   const query = queryState.source === urlQuery ? queryState.value : urlQuery
   const activePayment = pendingSale?.payment
@@ -65,6 +66,22 @@ export function SalesPosPage() {
       .catch(() => setSales([]))
     loadPendingPayments()
   }, [])
+
+  useEffect(() => {
+    if (!cartOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setCartOpen(false)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [cartOpen])
 
   function loadVariants() {
     return productsApi.listVariants()
@@ -230,6 +247,7 @@ export function SalesPosPage() {
   async function completarFlujo(completed: SaleResponse) {
     setSales((current) => [completed, ...current.filter((sale) => sale.idVenta !== completed.idVenta)])
     setCart([])
+    setCartOpen(false)
     resetPaymentFlow()
     await loadVariants()
     await loadPendingPayments()
@@ -261,7 +279,7 @@ export function SalesPosPage() {
   ]
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-6 pb-16 xl:pb-0">
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard label="Ventas registradas" value={String(sales.length)} icon={Receipt} />
         <KpiCard label="Ticket promedio" value={`S/ ${ticketAverage.toFixed(2)}`} icon={ShoppingCart} tone="success" />
@@ -272,7 +290,7 @@ export function SalesPosPage() {
       <div className="page-grid">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SearchInput value={query} onChange={updateSearch} placeholder="Buscar producto o SKU para vender" />
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="hidden shrink-0 flex-wrap items-center gap-2 sm:flex">
             {[3, 5].map((columns) => (
               <button
                 key={columns}
@@ -346,10 +364,27 @@ export function SalesPosPage() {
         </ChartCard>
       </div>
 
-      <aside className="h-fit rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 xl:sticky xl:top-24">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold">Resumen de venta</h2>
-          <p className="text-sm text-[var(--color-muted)]">{message}</p>
+      {cartOpen && (
+        <button type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} className="fixed inset-0 z-40 hidden bg-black/35 sm:block xl:hidden" />
+      )}
+      <aside
+        role={cartOpen ? 'dialog' : undefined}
+        aria-modal={cartOpen ? true : undefined}
+        aria-label="Resumen de venta"
+        className={cn(
+          'border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5',
+          cartOpen
+            ? 'fixed inset-y-0 right-0 z-50 block w-full overflow-y-auto pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))] shadow-[var(--shadow-float)] sm:max-w-[440px]'
+            : 'hidden',
+          'xl:sticky xl:top-24 xl:block xl:h-fit xl:w-auto xl:overflow-visible xl:rounded-2xl xl:shadow-none',
+        )}
+      >
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold">Resumen de venta</h2>
+            <p className="text-sm text-[var(--color-muted)]">{message}</p>
+          </div>
+          <IconButton label="Cerrar carrito" icon={X} onClick={() => setCartOpen(false)} className="xl:hidden" />
         </div>
         <div className="space-y-3">
           {cart.map((item) => (
@@ -432,7 +467,7 @@ export function SalesPosPage() {
                   <p className="break-all">{activePayment.providerReference}</p>
                   <p className="mt-2 text-[var(--color-muted)]">No es un QR ni comprobante de pago real.</p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <ActionButton variant="secondary" onClick={verificarEstado}>Verificar estado</ActionButton>
                   <ActionButton variant="danger" onClick={cancelarCobro}>Cancelar</ActionButton>
                 </div>
@@ -503,6 +538,16 @@ export function SalesPosPage() {
         </div>
       </aside>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setCartOpen(true)}
+        className="fixed bottom-[max(12px,env(safe-area-inset-bottom))] left-3 right-3 z-30 flex min-h-12 items-center justify-between gap-3 rounded-xl bg-[var(--color-primary)] px-4 text-sm font-bold text-white shadow-[var(--shadow-float)] xl:hidden"
+        aria-label={`Abrir carrito con ${cart.reduce((sum, item) => sum + item.quantity, 0)} productos y total S/ ${total.toFixed(2)}`}
+      >
+        <span className="inline-flex items-center gap-2"><ShoppingCart size={19} /> Ver carrito ({cart.reduce((sum, item) => sum + item.quantity, 0)})</span>
+        <span>S/ {total.toFixed(2)}</span>
+      </button>
     </div>
   )
 }

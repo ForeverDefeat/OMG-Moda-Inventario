@@ -19,11 +19,11 @@ const tones = {
 
 export function KpiCard({ label, value, helper, icon: Icon, tone = 'primary' }: KpiCardProps) {
   return (
-    <article className="dashboard-card flex min-h-[132px] flex-col gap-3 p-4">
+    <article className="dashboard-card flex min-h-[116px] min-w-0 flex-col gap-3 p-4 sm:min-h-[132px]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-medium text-[var(--color-muted)]">{label}</p>
-          <p className="mt-2 truncate text-2xl font-bold tracking-tight text-[var(--color-text)]">{value}</p>
+          <p className="mt-2 break-words text-2xl font-bold tracking-tight text-[var(--color-text)]">{value}</p>
         </div>
         <div className={cn('grid size-10 shrink-0 place-items-center rounded-lg', tones[tone])}>
           <Icon size={20} />

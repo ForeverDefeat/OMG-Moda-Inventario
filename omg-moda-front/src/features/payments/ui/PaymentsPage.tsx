@@ -49,7 +49,25 @@ export function PaymentsPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    loadPayments()
+    let active = true
+    paymentsApi.list({ status: 'PENDING' })
+      .then((data) => {
+        if (!active) return
+        setPayments(data)
+        setMessage(data.length ? 'Pagos cargados. Verifica antes de entregar productos.' : 'No hay pagos con los filtros actuales.')
+      })
+      .catch(() => {
+        if (!active) return
+        setPayments([])
+        setMessage('No se pudo cargar la bandeja de pagos.')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
   }, [])
 
   const pendingCount = payments.filter((payment) => payment.status === 'PENDING').length
@@ -240,7 +258,7 @@ export function PaymentsPage() {
   return (
     <div className="grid gap-6">
       <section className="flex justify-end">
-        <ActionButton variant="secondary" onClick={() => loadPayments(filters)} disabled={loading}>
+        <ActionButton className="w-full sm:w-auto" variant="secondary" onClick={() => loadPayments(filters)} disabled={loading}>
           <RefreshCcw size={16} /> Actualizar
         </ActionButton>
       </section>
@@ -252,7 +270,7 @@ export function PaymentsPage() {
       </section>
 
       <section className="dashboard-card p-4">
-        <div className="grid gap-3 md:grid-cols-[1fr_160px_160px_180px_180px_auto] md:items-end">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_160px_160px_180px_180px_auto] xl:items-end">
           <label className="block">
             <span className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">Buscar</span>
             <input
@@ -302,7 +320,7 @@ export function PaymentsPage() {
               className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm outline-none"
             />
           </label>
-          <ActionButton onClick={applyFilters} disabled={loading}>Filtrar</ActionButton>
+          <ActionButton className="sm:col-span-2 xl:col-span-1" onClick={applyFilters} disabled={loading}>Filtrar</ActionButton>
         </div>
         <p className="mt-3 text-sm font-semibold text-[var(--color-muted)]">{message}</p>
       </section>

@@ -47,6 +47,7 @@
 
 html {
   min-width: 320px;
+  overflow-x: clip;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
@@ -58,6 +59,8 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  min-width: 320px;
+  overflow-x: clip;
   background: var(--color-bg);
 }
 
@@ -66,6 +69,12 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
 }
 
 button {
@@ -188,9 +197,31 @@ table {
   }
 
   .app-window {
-    min-height: 100vh;
+    min-height: 100dvh;
     border-radius: 0;
     border-left: 0;
     border-right: 0;
+  }
+
+  .page-grid {
+    gap: 16px;
+  }
+
+  .dashboard-card {
+    border-radius: var(--radius-lg);
+  }
+
+  .panel-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  details.responsive-filter-panel > summary {
+    display: none;
+  }
+
+  details.responsive-filter-panel > :not(summary) {
+    display: block;
   }
 }

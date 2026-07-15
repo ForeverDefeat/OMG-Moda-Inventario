@@ -59,7 +59,7 @@ export function PurchaseOrdersPage() {
   return (
     <div className="page-grid">
       <section className="flex flex-col gap-8 lg:flex-row">
-        <aside className="flex shrink-0 flex-col gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:w-64">
+        <aside className="grid shrink-0 gap-4 sm:grid-cols-3 lg:flex lg:w-64 lg:flex-col">
           <KpiCard label="Sugerencias" value={String(filteredSuggestions.length)} helper={`${suggestions.length} totales`} icon={PackageSearch} />
           <KpiCard label="Costo estimado" value={`S/ ${total.toLocaleString('es-PE', { maximumFractionDigits: 2 })}`} icon={ClipboardList} tone="warning" />
           <KpiCard label="Proveedores activos" value={String(visibleProviders)} icon={Truck} tone="success" />
@@ -71,7 +71,7 @@ export function PurchaseOrdersPage() {
             <select
               value={priorityFilter}
               onChange={(event) => setPriorityFilter(event.target.value)}
-              className="min-h-10 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] outline-none"
+              className="min-h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] outline-none md:min-h-10 md:w-auto"
               aria-label="Filtrar por prioridad"
             >
               <option value="Todas">Todas las prioridades</option>
@@ -82,7 +82,7 @@ export function PurchaseOrdersPage() {
             <select
               value={providerFilter}
               onChange={(event) => setProviderFilter(event.target.value)}
-              className="min-h-10 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] outline-none"
+              className="min-h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)] outline-none md:min-h-10 md:w-auto"
               aria-label="Filtrar por proveedor"
             >
               <option value="Todos">Todos los proveedores</option>

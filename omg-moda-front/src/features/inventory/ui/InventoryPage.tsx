@@ -308,7 +308,7 @@ export function InventoryPage() {
   return (
     <div className="page-grid">
       <section className="flex justify-end">
-        <div className="flex flex-wrap gap-2">
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           <ActionButton variant="secondary" onClick={() => openEntryModal()}><Truck size={17} /> Transferir Stock</ActionButton>
           <ActionButton onClick={() => openAdjustmentModal()}><SlidersHorizontal size={17} /> Ajustar Stock</ActionButton>
         </div>
@@ -322,7 +322,11 @@ export function InventoryPage() {
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+        <details className="responsive-filter-panel rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 lg:rounded-2xl">
+          <summary className="cursor-pointer list-none font-bold marker:hidden lg:hidden">
+            <span className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2"><MapPin size={16} /> {activeWarehouse.nombre}</span><span className="text-xs text-[var(--color-muted)]">Cambiar almacen</span></span>
+          </summary>
+          <div className="mt-4 lg:mt-0">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-sm font-bold">Almacenes</h2>
             <button
@@ -334,7 +338,7 @@ export function InventoryPage() {
             </button>
           </div>
           <SearchInput value={warehouseSearch} onChange={setWarehouseSearch} placeholder="Buscar almacenes..." />
-          <div className="mt-4 grid gap-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
             {visibleWarehouses.map((warehouse) => {
               const selected = warehouse.id === activeWarehouse.id
               return (
@@ -364,19 +368,20 @@ export function InventoryPage() {
               </p>
             )}
           </div>
-        </aside>
+          </div>
+        </details>
 
         <section className="min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-          <div className="grid gap-4 border-b border-[var(--color-border)] p-5 lg:grid-cols-[1fr_auto]">
+          <div className="grid gap-4 border-b border-[var(--color-border)] p-4 sm:p-5 lg:grid-cols-[1fr_auto]">
             <div className="min-w-0">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">{activeWarehouse.tipo}</span>
                 <Badge tone={activeWarehouse.estado === 'Operativo' ? 'success' : 'warning'}>{activeWarehouse.estado}</Badge>
               </div>
-              <h2 className="truncate text-2xl font-black">{activeWarehouse.nombre}</h2>
+              <h2 className="break-words text-xl font-black sm:text-2xl">{activeWarehouse.nombre}</h2>
               <p className="mt-1 text-sm text-[var(--color-muted)]">{activeWarehouse.direccion || 'Direccion pendiente por registrar.'}</p>
             </div>
-            <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 text-sm min-[380px]:grid-cols-2 sm:grid-cols-3 sm:gap-4">
               <Metric label="Capacidad" value={`${activeWarehouse.capacidad}%`} />
               <Metric label="Responsable" value={activeWarehouse.responsable} />
               <Metric label="Estado" value={message} muted />

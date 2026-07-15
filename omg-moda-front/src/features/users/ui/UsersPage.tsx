@@ -33,11 +33,23 @@ export function UsersPage() {
   const isAdmin = session?.rol === 'ADMIN'
 
   useEffect(() => {
-    if (!isAdmin) {
-      setLoading(false)
-      return
+    if (!isAdmin) return
+    let active = true
+
+    usersApi.list()
+      .then((data) => {
+        if (active) setUsers(data)
+      })
+      .catch((err: unknown) => {
+        if (active) setError(err instanceof Error ? err.message : 'No se pudieron cargar los usuarios.')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
     }
-    loadUsers()
   }, [isAdmin])
 
   const summary = useMemo(() => {
@@ -99,18 +111,6 @@ export function UsersPage() {
       ),
     },
   ]
-
-  async function loadUsers() {
-    setLoading(true)
-    setError(null)
-    try {
-      setUsers(await usersApi.list())
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudieron cargar los usuarios.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   function openCreateModal() {
     setCreateForm(emptyCreateForm)
@@ -255,7 +255,7 @@ export function UsersPage() {
             Crea accesos internos, cambia roles, resetea claves y bloquea usuarios sin perder historial operativo.
           </p>
         </div>
-        <ActionButton onClick={openCreateModal}>
+        <ActionButton onClick={openCreateModal} className="w-full md:w-auto">
           <UserPlus size={17} />
           Anadir usuario
         </ActionButton>
@@ -360,7 +360,7 @@ function RoleSelect({ value, onChange }: { value: UserRole; onChange: (role: Use
 
 function ModalActions({ saving, onCancel, submitLabel }: { saving: boolean; onCancel: () => void; submitLabel: string }) {
   return (
-    <div className="flex justify-end gap-2 pt-2">
+    <div className="grid grid-cols-1 gap-2 pt-2 sm:flex sm:justify-end">
       <ActionButton type="button" variant="secondary" onClick={onCancel} disabled={saving}>Cancelar</ActionButton>
       <ActionButton type="submit" disabled={saving}>{saving ? 'Guardando...' : submitLabel}</ActionButton>
     </div>

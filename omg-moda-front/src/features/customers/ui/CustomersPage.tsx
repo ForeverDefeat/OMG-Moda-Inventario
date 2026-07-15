@@ -63,7 +63,7 @@ export function CustomersPage() {
     <div className="page-grid">
       {canManageCustomers && (
         <section className="flex justify-end">
-          <ActionButton onClick={() => setModalOpen(true)}><UserPlus size={17} /> Anadir cliente</ActionButton>
+          <ActionButton onClick={() => setModalOpen(true)} className="w-full sm:w-auto"><UserPlus size={17} /> Anadir cliente</ActionButton>
         </section>
       )}
 
@@ -115,7 +115,7 @@ export function CustomersPage() {
               <input name="ultimaCompra" type="date" className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 outline-none" />
             </label>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:justify-end">
             <ActionButton type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</ActionButton>
             <ActionButton type="submit">Guardar cliente</ActionButton>
           </div>

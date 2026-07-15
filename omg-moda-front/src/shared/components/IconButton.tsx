@@ -17,7 +17,7 @@ export function IconButton({ label, icon: Icon, onClick, className, type = 'butt
       title={label}
       onClick={onClick}
       className={cn(
-        'grid size-10 place-items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] transition hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]',
+        'grid size-11 shrink-0 place-items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] transition hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] sm:size-10',
         className,
       )}
     >

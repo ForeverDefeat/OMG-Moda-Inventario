@@ -34,8 +34,8 @@ export function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[var(--color-bg)] p-5 max-lg:p-0">
-      <section className="flex min-h-[calc(100vh-40px)] w-full overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] max-lg:min-h-screen max-lg:rounded-none max-lg:border-0">
+    <main className="grid min-h-[100dvh] place-items-center bg-[var(--color-bg)] p-5 max-lg:p-0">
+      <section className="flex min-h-[calc(100vh-40px)] w-full overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] max-lg:min-h-[100dvh] max-lg:rounded-none max-lg:border-0">
         <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-[var(--color-bg)] p-12 text-white lg:flex">
           <img
             src={heroImage}
@@ -62,16 +62,16 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div className="flex w-full items-center justify-center p-8 lg:w-1/2">
+        <div className="flex w-full items-center justify-center px-5 py-8 sm:p-8 lg:w-1/2">
           <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col">
-            <div className="mb-10">
+            <div className="mb-7 sm:mb-10">
               <div className="mb-6 flex items-center gap-3 lg:hidden">
                 <div className="flex size-10 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white">
                   <Shirt size={20} />
                 </div>
                 <span className="text-xl font-bold tracking-tight">ClothWise</span>
               </div>
-              <h1 className="mb-2 text-3xl font-bold tracking-tight text-[var(--color-text)]">
+              <h1 className="mb-2 text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">
                 Bienvenido de nuevo
               </h1>
               <p className="text-[var(--color-muted)]">
@@ -95,7 +95,7 @@ export function LoginPage() {
               </label>
 
               <label className="flex flex-col gap-2">
-                <span className="flex items-center justify-between">
+                <span className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-[var(--color-text)]">Contrasenia</span>
                   <button type="button" className="text-xs font-medium text-[var(--color-primary)]">
                     Olvidaste tu contrasenia?

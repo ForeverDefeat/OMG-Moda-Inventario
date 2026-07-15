@@ -18,7 +18,7 @@ export function ActionButton({ children, className, variant = 'primary', ...prop
     <button
       {...props}
       className={cn(
-        'inline-flex min-h-10 items-center justify-center gap-2 rounded-[var(--radius-md)] px-4 text-sm font-semibold transition',
+        'inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] px-4 text-sm font-semibold transition sm:min-h-10',
         variants[variant],
         className,
       )}

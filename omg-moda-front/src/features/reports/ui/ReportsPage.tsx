@@ -167,12 +167,14 @@ export function ReportsPage() {
 
   useEffect(() => {
     if (hasInvalidRange) {
-      setSummary(emptySummary)
-      setTrend([])
-      setCategory([])
-      setRotation([])
-      setAlerts([])
-      setStatus('La fecha de inicio no puede ser posterior a la fecha final.')
+      Promise.resolve().then(() => {
+        setSummary(emptySummary)
+        setTrend([])
+        setCategory([])
+        setRotation([])
+        setAlerts([])
+        setStatus('La fecha de inicio no puede ser posterior a la fecha final.')
+      })
       return
     }
 
@@ -220,9 +222,9 @@ export function ReportsPage() {
 
   return (
     <div className="page-grid">
-      <section className="flex justify-end">
-        <div className="grid gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm xl:min-w-[720px]">
-          <div className="flex flex-wrap items-end gap-2">
+      <section className="flex min-w-0 justify-end">
+        <div className="grid w-full min-w-0 gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-sm xl:w-auto xl:min-w-[720px]">
+          <div className="grid min-w-0 grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap">
             <label className="grid gap-1 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-muted)]">
               Modo
               <select value={rangeMode} onChange={(event) => setRangeMode(event.target.value as RangeMode)} className="min-h-10 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm font-semibold normal-case tracking-normal text-[var(--color-text)]">
@@ -274,7 +276,7 @@ export function ReportsPage() {
               </select>
             </label>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:col-span-2 lg:flex">
               <ActionButton type="button" variant="secondary" disabled={downloading || hasInvalidRange} onClick={() => handleDownload('csv')}>
                 <Download size={16} />
                 CSV

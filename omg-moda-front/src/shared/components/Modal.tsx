@@ -44,12 +44,12 @@ export function Modal({ open, title, subtitle, children, onClose, size = 'md', c
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/45 p-4" onMouseDown={handleOverlayClick}>
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/45 p-0 sm:p-4" onMouseDown={handleOverlayClick}>
       <section className={cn(
-        'max-h-[calc(100vh-2rem)] w-full overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-float)]',
+        'flex h-[100dvh] w-full flex-col overflow-hidden bg-[var(--color-surface)] shadow-[var(--shadow-float)] sm:h-auto sm:max-h-[calc(100vh-2rem)] sm:rounded-2xl sm:border sm:border-[var(--color-border)]',
         size === 'lg' ? 'max-w-4xl' : 'max-w-xl',
       )} role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <header className={cn('flex items-center justify-between px-5 py-4', title && 'border-b border-[var(--color-border)]')}>
+        <header className={cn('flex shrink-0 items-center justify-between px-4 pb-3 pt-[max(12px,env(safe-area-inset-top))] sm:px-5 sm:py-4', title && 'border-b border-[var(--color-border)]')}>
           {title ? (
             <div className="min-w-0">
               <h2 id="modal-title" className="text-lg font-bold text-[var(--color-text)]">{title}</h2>
@@ -58,7 +58,7 @@ export function Modal({ open, title, subtitle, children, onClose, size = 'md', c
           ) : <span id="modal-title" className="sr-only">Modal</span>}
           <IconButton label="Cerrar" icon={X} onClick={onClose} />
         </header>
-        <div className="max-h-[calc(100vh-7rem)] overflow-x-hidden overflow-y-auto p-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-4 pb-[max(20px,env(safe-area-inset-bottom))] sm:max-h-[calc(100vh-7rem)] sm:p-5">{children}</div>
       </section>
     </div>,
     document.body,

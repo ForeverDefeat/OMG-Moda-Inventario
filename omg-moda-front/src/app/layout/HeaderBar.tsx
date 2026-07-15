@@ -116,6 +116,7 @@ export function HeaderBar() {
     navigate(href)
     setSearch('')
     setSearchFocused(false)
+    setMobileOpen(false)
   }
 
   function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
@@ -126,14 +127,14 @@ export function HeaderBar() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-      <div className="flex min-h-[var(--header-height)] items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div className="flex min-w-[210px] items-center gap-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-lg)] bg-[var(--color-primary)] text-white">
+      <div className="flex min-h-[var(--header-height)] items-center justify-between gap-2 px-3 py-2 sm:gap-4 sm:px-6 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2 sm:min-w-[210px] sm:gap-3">
+          <div className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-lg)] bg-[var(--color-primary)] text-white sm:size-10">
             <Shirt size={20} />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-bold leading-tight text-[var(--color-text)]">OMG MODA</p>
-            <p className="truncate text-xs text-[var(--color-muted)]">Helping retailers manage stock smarter.</p>
+            <p className="hidden truncate text-xs text-[var(--color-muted)] sm:block">Helping retailers manage stock smarter.</p>
           </div>
         </div>
 
@@ -194,22 +195,58 @@ export function HeaderBar() {
 
         <div className="flex items-center gap-2">
           <IconButton label="Menu" icon={Menu} className="min-[1700px]:hidden" onClick={() => setMobileOpen(true)} />
-          <IconButton label="Notificaciones" icon={Bell} />
+          <IconButton label="Notificaciones" icon={Bell} className="hidden sm:grid" />
           <div className="hidden min-w-[150px] text-right sm:block">
             <p className="text-sm font-semibold text-[var(--color-text)]">{session?.nombre ?? 'Usuario'}</p>
             <p className="text-xs text-[var(--color-muted)]">{session?.rol ?? 'ADMIN'}</p>
           </div>
-          <IconButton label="Cerrar sesion" icon={LogOut} onClick={logout} />
+          <IconButton label="Cerrar sesion" icon={LogOut} onClick={logout} className="hidden md:grid" />
         </div>
       </div>
 
-      <div className="border-t border-[var(--color-border)] px-4 py-3 sm:px-6 lg:hidden">
-        <h1 className="truncate text-xl font-bold text-[var(--color-text)]">{copy.title}</h1>
-        <p className="truncate text-sm text-[var(--color-muted)]">{copy.subtitle}</p>
+      <div className="border-t border-[var(--color-border)] px-3 py-3 sm:px-6 lg:hidden">
+        <h1 className="text-lg font-bold leading-tight text-[var(--color-text)] sm:text-xl">{copy.title}</h1>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--color-muted)] sm:text-sm">{copy.subtitle}</p>
       </div>
 
       <Drawer title="Navegacion" isOpen={mobileOpen} onClose={() => setMobileOpen(false)} side="left">
-        <nav className="grid gap-2">
+        <div className="mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3">
+          <p className="font-bold text-[var(--color-text)]">{session?.nombre ?? 'Usuario'}</p>
+          <p className="text-xs font-semibold text-[var(--color-muted)]">{session?.rol ?? 'ADMIN'}</p>
+        </div>
+
+        <form onSubmit={handleSearchSubmit} className="relative mb-5" role="search" aria-label="Busqueda global movil">
+          <label className="flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3">
+            <Search size={17} className="shrink-0 text-[var(--color-muted)]" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              className="ml-2 min-w-0 flex-1 bg-transparent text-sm outline-none"
+              placeholder="Buscar modulo o producto..."
+            />
+          </label>
+          {searchFocused && searchSuggestions.length > 0 && (
+            <div className="mt-2 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+              {searchSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion.id}
+                  type="button"
+                  onClick={() => goToSearchResult(suggestion.href)}
+                  className="flex min-h-11 w-full items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2 text-left text-sm last:border-b-0"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">{suggestion.label}</span>
+                    <span className="block truncate text-xs text-[var(--color-muted)]">{suggestion.meta}</span>
+                  </span>
+                  <Search size={15} className="shrink-0 text-[var(--color-muted)]" />
+                </button>
+              ))}
+            </div>
+          )}
+        </form>
+
+        <nav className="grid gap-2" aria-label="Modulos">
           {visibleNavItems.map(({ href, icon: Icon, label }) => (
             <NavLink
               key={href}
@@ -225,6 +262,14 @@ export function HeaderBar() {
             </NavLink>
           ))}
         </nav>
+
+        <button
+          type="button"
+          onClick={logout}
+          className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] font-semibold text-[var(--color-text)]"
+        >
+          <LogOut size={18} /> Cerrar sesion
+        </button>
       </Drawer>
     </header>
   )

@@ -9,7 +9,7 @@ export function AppShell() {
     <div className="app-frame text-[var(--color-text)]">
       <div className="app-window">
         <HeaderBar />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 flex-1 p-3 sm:p-6 lg:p-8">
           <div key={location.pathname} className="page-transition">
             <Outlet />
           </div>

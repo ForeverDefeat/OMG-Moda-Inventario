@@ -13,7 +13,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-6 text-xs text-[var(--color-muted)]">
+    <footer className="border-t border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-5 text-xs text-[var(--color-muted)] sm:px-6 sm:py-6">
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr_1fr] lg:items-start">
         <div className="flex gap-3">
           <div className="grid size-10 shrink-0 place-items-center rounded-[var(--radius-lg)] bg-[var(--color-primary)] text-white">
@@ -33,7 +33,7 @@ export function Footer() {
           <span className="inline-flex items-center gap-2"><MapPin size={14} /> Lima, Peru</span>
           <span className="inline-flex items-center gap-2"><Mail size={14} /> soporte@omgmoda.pe</span>
           <span className="inline-flex items-center gap-2"><ShieldCheck size={14} /> Acceso protegido con JWT</span>
-          <span className="inline-flex items-center gap-2"><Server size={14} /> API: {API_ORIGIN}</span>
+          <span className="inline-flex min-w-0 items-start gap-2"><Server size={14} className="mt-0.5 shrink-0" /> <span className="min-w-0 break-all">API: {API_ORIGIN}</span></span>
         </div>
 
         <div className="grid gap-3">
