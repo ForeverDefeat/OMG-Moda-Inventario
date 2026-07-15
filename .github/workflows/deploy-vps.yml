@@ -17,6 +17,44 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Checkout deployment revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine deployment scope
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          DEPLOY_BACKEND=false
+          DEPLOY_FRONTEND=false
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            DEPLOY_BACKEND=true
+            DEPLOY_FRONTEND=true
+          else
+            CHANGED_FILES="$(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")"
+            printf '%s\n' "$CHANGED_FILES"
+
+            if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(sistema-inventario/|deploy/clothwise/)'; then
+              DEPLOY_BACKEND=true
+            fi
+
+            if printf '%s\n' "$CHANGED_FILES" | grep -Eq '^(omg-moda-front/|deploy/clothwise/|\.github/workflows/deploy-vps\.yml$)'; then
+              DEPLOY_FRONTEND=true
+            fi
+          fi
+
+          echo "backend=$DEPLOY_BACKEND" >> "$GITHUB_OUTPUT"
+          echo "frontend=$DEPLOY_FRONTEND" >> "$GITHUB_OUTPUT"
+          echo "Deploy backend: $DEPLOY_BACKEND"
+          echo "Deploy frontend: $DEPLOY_FRONTEND"
+
       - name: Validate configuration
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -25,6 +63,8 @@ jobs:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_APP_DIR: ${{ vars.VPS_APP_DIR }}
           BACKEND_SERVICE: ${{ vars.BACKEND_SERVICE }}
+          DEPLOY_BACKEND: ${{ steps.scope.outputs.backend }}
+          DEPLOY_FRONTEND: ${{ steps.scope.outputs.frontend }}
         run: |
           set -euo pipefail
           test -n "$VPS_HOST"
@@ -33,6 +73,8 @@ jobs:
           test -n "$VPS_SSH_KEY"
           test -n "$VPS_APP_DIR"
           test -n "$BACKEND_SERVICE"
+          test -n "$DEPLOY_BACKEND"
+          test -n "$DEPLOY_FRONTEND"
 
       - name: Configure SSH
         env:
@@ -58,6 +100,8 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_APP_DIR: ${{ vars.VPS_APP_DIR }}
           BACKEND_SERVICE: ${{ vars.BACKEND_SERVICE }}
+          DEPLOY_BACKEND: ${{ steps.scope.outputs.backend }}
+          DEPLOY_FRONTEND: ${{ steps.scope.outputs.frontend }}
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/deploy_key \
@@ -65,11 +109,13 @@ jobs:
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            'bash -s' -- "$VPS_APP_DIR" "$BACKEND_SERVICE" <<'REMOTE'
+            'bash -s' -- "$VPS_APP_DIR" "$BACKEND_SERVICE" "$DEPLOY_BACKEND" "$DEPLOY_FRONTEND" <<'REMOTE'
           set -Eeuo pipefail
 
           APP_DIR="$1"
           BACKEND_SERVICE="$2"
+          DEPLOY_BACKEND="$3"
+          DEPLOY_FRONTEND="$4"
           JAR_DEST="/opt/clothwise/api/clothwise-api.jar"
           FRONTEND_DEST="/var/www/clothwise/frontend"
 
@@ -81,77 +127,107 @@ jobs:
             fi
           }
 
+          backend_diagnostics() {
+            echo "Backend service status:"
+            systemctl status "$BACKEND_SERVICE" --no-pager --full || true
+            echo "Recent backend logs:"
+            journalctl -u "$BACKEND_SERVICE" -n 120 --no-pager || true
+          }
+
           cd "$APP_DIR"
+          # These files were previously dirtied by deployment tooling on the VPS.
+          # Restore only these known build inputs before requiring a clean tracked tree.
+          git restore --worktree -- sistema-inventario/mvnw omg-moda-front/package-lock.json 2>/dev/null || true
+          if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+            echo "The VPS deployment checkout contains unexpected tracked changes:"
+            git status --short --untracked-files=no
+            exit 1
+          fi
           git fetch origin master
           git checkout master
           git pull --ff-only origin master
 
-          cd "$APP_DIR/sistema-inventario"
-          chmod +x ./mvnw || true
-          ./mvnw clean package -DskipTests
+          if [ "$DEPLOY_BACKEND" = "true" ]; then
+            cd "$APP_DIR/sistema-inventario"
+            bash ./mvnw clean package -DskipTests
 
-          JAR_PATH="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*sources.jar' ! -name '*javadoc.jar' | head -n 1)"
-          if [ -z "$JAR_PATH" ]; then
-            echo "No Spring Boot jar was found in sistema-inventario/target."
-            exit 1
-          fi
+            JAR_PATH="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*sources.jar' ! -name '*javadoc.jar' | head -n 1)"
+            if [ -z "$JAR_PATH" ]; then
+              echo "No Spring Boot jar was found in sistema-inventario/target."
+              exit 1
+            fi
 
-          JAR_BACKUP=""
-          if [ -f "$JAR_DEST" ]; then
-            JAR_BACKUP="${JAR_DEST}.$(date +%Y%m%d%H%M%S).bak"
-            cp "$JAR_DEST" "$JAR_BACKUP"
-          fi
+            JAR_BACKUP=""
+            if [ -f "$JAR_DEST" ]; then
+              JAR_BACKUP="${JAR_DEST}.$(date +%Y%m%d%H%M%S).bak"
+              cp "$JAR_DEST" "$JAR_BACKUP"
+            fi
 
-          install -m 0644 "$JAR_PATH" "$JAR_DEST"
-          if ! systemctl restart "$BACKEND_SERVICE"; then
-            rollback_backend
-            exit 1
-          fi
+            install -m 0644 "$JAR_PATH" "$JAR_DEST"
+            if ! systemctl restart "$BACKEND_SERVICE"; then
+              backend_diagnostics
+              rollback_backend
+              exit 1
+            fi
 
-          sleep 10
-          if ! systemctl is-active --quiet "$BACKEND_SERVICE"; then
-            rollback_backend
-            exit 1
-          fi
+            BACKEND_HEALTHY=false
+            for ATTEMPT in $(seq 1 18); do
+              HEALTH_RESPONSE="$(curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8081/actuator/health 2>/dev/null || true)"
+              if systemctl is-active --quiet "$BACKEND_SERVICE" && printf '%s' "$HEALTH_RESPONSE" | grep -Eq '"status"[[:space:]]*:[[:space:]]*"UP"'; then
+                echo "Backend health check passed on attempt $ATTEMPT."
+                BACKEND_HEALTHY=true
+                break
+              fi
+              echo "Backend is not healthy yet (attempt $ATTEMPT/18)."
+              sleep 5
+            done
 
-          if ! curl --fail --silent --show-error --max-time 20 http://127.0.0.1:8081/actuator/health; then
-            rollback_backend
-            exit 1
-          fi
-
-          cd "$APP_DIR/omg-moda-front"
-          export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-          if [ -s "$NVM_DIR/nvm.sh" ]; then
-            . "$NVM_DIR/nvm.sh"
-            nvm install 22
-            nvm use 22
-          fi
-          export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
-          if ! command -v npm >/dev/null 2>&1; then
-            echo "npm is not installed or is not available in this SSH deploy session."
-            echo "Current PATH: $PATH"
-            echo "Install Node.js/npm on the VPS, then rerun this workflow."
-            exit 127
-          fi
-          node -v
-          npm -v
-          rm -rf node_modules
-          npm ci
-          npm run build
-
-          if [ ! -d dist ]; then
-            echo "Frontend dist directory was not generated."
-            exit 1
-          fi
-
-          mkdir -p "$FRONTEND_DEST"
-          if command -v rsync >/dev/null 2>&1; then
-            rsync -a --delete dist/ "$FRONTEND_DEST/"
+            if [ "$BACKEND_HEALTHY" != "true" ]; then
+              backend_diagnostics
+              rollback_backend
+              exit 1
+            fi
           else
-            find "$FRONTEND_DEST" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-            cp -a dist/. "$FRONTEND_DEST/"
+            echo "No backend changes detected; keeping the current backend service running."
           fi
 
-          nginx -t
-          systemctl reload nginx
+          if [ "$DEPLOY_FRONTEND" = "true" ]; then
+            cd "$APP_DIR/omg-moda-front"
+            export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+            if [ -s "$NVM_DIR/nvm.sh" ]; then
+              . "$NVM_DIR/nvm.sh"
+              nvm install 22
+              nvm use 22
+            fi
+            export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+            if ! command -v npm >/dev/null 2>&1; then
+              echo "npm is not installed or is not available in this SSH deploy session."
+              echo "Current PATH: $PATH"
+              echo "Install Node.js/npm on the VPS, then rerun this workflow."
+              exit 127
+            fi
+            node -v
+            npm -v
+            rm -rf node_modules
+            npm ci
+            npm run build
+
+            if [ ! -d dist ]; then
+              echo "Frontend dist directory was not generated."
+              exit 1
+            fi
+
+            mkdir -p "$FRONTEND_DEST"
+            if command -v rsync >/dev/null 2>&1; then
+              rsync -a --delete dist/ "$FRONTEND_DEST/"
+            else
+              find "$FRONTEND_DEST" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+              cp -a dist/. "$FRONTEND_DEST/"
+            fi
+
+            nginx -t
+            systemctl reload nginx
+          else
+            echo "No frontend changes detected; keeping the current frontend assets."
+          fi
           REMOTE
